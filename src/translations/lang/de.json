@@ -1,0 +1,18 @@
+{
+  "Sign in": "Anmeldung",
+  "Articles": "Einträge",
+  "Categories": "Kategorien",
+  "Users": "Benutzer",
+
+  "date_interval_y_singular": "vor einem Jahr",
+  "date_interval_y_plural": "vor %s Jahren",
+  "date_interval_m_singular": "vor einem Monat",
+  "date_interval_m_plural": "vor %s Monaten",
+  "date_interval_d_singular": "vor einem Tag",
+  "date_interval_d_plural": "vor %s Tagen",
+  "date_interval_h_singular": "vor einer Stunde",
+  "date_interval_h_plural": "vor %s Stunden",
+  "date_interval_i_singular": "vor einer Minute",
+  "date_interval_i_plural": "vor 3 Minuten",
+  "date_interval_seconds_ago": "Sekunden zuvor"
+}

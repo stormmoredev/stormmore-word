@@ -1,0 +1,7 @@
+{
+  "locale": "en-US",
+  "dateFormat": "Y-MM-d",
+  "dateTimeFormat": "Y-MM-d H:mm",
+  "currency": "USD",
+  "timeZone": "Europe/Warsaw"
+}

@@ -1,0 +1,5 @@
+Hi,
+
+%content%
+
+Bye

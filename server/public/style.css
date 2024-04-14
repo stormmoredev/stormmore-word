@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:focus {
+    @apply outline-0
+}
+
+#editable h3 {
+    @apply text-4xl mb-8
+}
+
+#editable .medium-editor-placeholder {
+    @apply text-slate-400
+}
+
+.spinner_S1WN{animation:spinner_MGfb .8s linear infinite;animation-delay:-.8s}
+.spinner_Km9P{animation-delay:-.65s}
+.spinner_JApP{animation-delay:-.5s}
+@keyframes spinner_MGfb{93.75%,100%{opacity:.2}}
+
+.btn {
+    @apply hover:bg-slate-100 px-4 py-1 font-semibold text-sm
+        bg-white text-slate-700 border border-slate-300 rounded-md shadow-sm
+}
+
+.btn[disabled] {
+    @apply bg-gray-200 text-gray-300 border-gray-100
+}
+
+.btn-group .btn-l {
+    @apply border-r-0 rounded-r-none
+}
+
+.btn-group .btn-r {
+    @apply border-l-0 rounded-l-none
+}
+
+.form .row {
+    @apply mb-3
+}
+
+.form input[type=text], input[type=password], select {
+    @apply block w-full rounded-md border-0 py-1.5 pl-3 text-gray-900
+        shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2
+        focus:ring-inset focus:ring-blue-400
+}
+
+.form input[type=checkbox] {
+    @apply  w-4 h-4 border-2 border-blue-500 rounded-sm bg-white
+}
+
+.form select {
+    @apply pl-2
+}
+
+.form label {
+    @apply block text-sm font-medium leading-6 text-gray-900 cursor-pointer
+}
+
+.main-table {
+    @apply table-auto w-full
+}
+
+.main-table th {
+    @apply text-left text-slate-700
+}
+
+.main-table tbody tr {
+    @apply hover:bg-blue-50
+}
+
+#article h3 {
+    @apply mt-6 text-4xl font-bold tracking-tight text-zinc-800 sm:text-5xl dark:text-zinc-100 mb-10
+}
+
+#article p{
+    @apply text-base
+}
+
+#article h2 {
+    @apply font-semibold mb-1 mt-5
+}
+
+

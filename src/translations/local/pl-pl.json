@@ -1,0 +1,7 @@
+{
+  "locale": "pl-PL",
+  "dateFormat": "d-MM-Y",
+  "dateTimeFormat": "d-MM-Y H:mm",
+  "currency": "PLN",
+  "timeZone": "Europe/Warsaw"
+}

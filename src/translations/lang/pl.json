@@ -1,0 +1,24 @@
+{
+  "Sign in": "Zaloguj się",
+  "Sign out": "Wyloguj się",
+  "Title": "Tytuł",
+  "Articles": "Artykuły",
+  "Categories": "Kategorie",
+  "Users": "Użytkownicy",
+  "Sessions": "Sesje",
+  "Settings": "Ustawienia",
+  "Search": "Szukaj",
+  "Read article": "Czytaj całość",
+
+  "date_interval_y_singular": "rok temu",
+  "date_interval_y_plural": "%s lata temu",
+  "date_interval_m_singular": "miesiąc temu",
+  "date_interval_m_plural": "%s miesiące temu",
+  "date_interval_d_singular": "dzień temu",
+  "date_interval_d_plural": "%s dni temu",
+  "date_interval_h_singular": "godzinę temu",
+  "date_interval_h_plural": "%s godziny temu",
+  "date_interval_i_singular": "minutę",
+  "date_interval_i_plural": "%s minuty temu",
+  "date_interval_seconds_ago": "sekundy temu"
+}

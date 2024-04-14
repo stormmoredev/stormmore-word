@@ -1,0 +1,21 @@
+services:
+  database:
+    build:
+      context: .
+      target: database
+    ports:
+      - "5433:5432"
+  web:
+    build:
+      context: .
+      target: cms
+    ports:
+      - "80:80"
+    develop:
+      watch:
+        - action: sync
+          path: ./
+          target: /usr/dev/
+          ignore:
+            - .idea
+            - .git

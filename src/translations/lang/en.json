@@ -1,0 +1,15 @@
+{
+  "Sign in": "Sign in",
+
+  "date_interval_y_singular": "year ago",
+  "date_interval_y_plural": "%s years ago",
+  "date_interval_m_singular": "month ago",
+  "date_interval_m_plural": "%s months ago",
+  "date_interval_d_singular": "day ago",
+  "date_interval_d_plural": "%s days ago",
+  "date_interval_h_singular": "hour ago",
+  "date_interval_h_plural": "%s hours ago",
+  "date_interval_i_singular": "minute ago",
+  "date_interval_i_plural": "%s minutes ago",
+  "date_interval_seconds_ago": "seconds ago"
+}

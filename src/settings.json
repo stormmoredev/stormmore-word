@@ -1,0 +1,73 @@
+{
+  "name": "Living Word",
+  "url": "http://localhost",
+  "secretKey": "aea05c6984922dab47f9b739877aeee2",
+  "defaultRole": "reader",
+  "roles": ["reader", "moderator", "editor"],
+  "theme": "basic",
+  "themes": ["basic"],
+  "pageSize": 30,
+
+  "multiLanguage": false,
+  "defaultApplicationLanguage": "en-US",
+  "defaultLanguage": "en",
+  "applicationLanguages": ["en","en-US", "pl", "de"],
+  "enabledLanguages": ["en", "pl", "de","ga"],
+
+  "editorEntry": {
+    "maxChars": 3000,
+    "maxWords": 1000,
+    "maxPreviewChars": 550
+  },
+
+  "comments": {
+    "enabled": true,
+    "approvalIsRequired": false,
+    "maxChars": 1000
+  },
+
+  "database": {
+    "host": "database",
+    "port": 5432,
+    "name": "cms",
+    "user": "postgres",
+    "password": "postgres"
+  },
+
+  "session": {
+    "sessionLifeTime": "15 minutes",
+    "rememberSessionLifeTime": "+6 months"
+  },
+
+  "mail": {
+    "from": {
+      "name": "",
+      "address": ""
+    },
+    "host": "",
+    "isAuthenticationEnabled": false,
+    "username": "",
+    "password": "",
+    "isTlsEnabled": false,
+    "port": null
+  },
+
+  "authentication": {
+    "enabled": true,
+    "facebook": {
+      "enabled": false,
+      "id": "",
+      "secret": ""
+    },
+    "google": {
+      "enabled": false,
+      "id": "",
+      "secret": ""
+    },
+    "wordpress": {
+      "enabled": false,
+      "id": "",
+      "secret": ""
+    }
+  }
+}
