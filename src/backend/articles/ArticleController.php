@@ -12,7 +12,6 @@ readonly class ArticleController
 {
     public function __construct(
         private Request $request,
-        private Response $response,
         private ArticleStore $articleStore,
         private ArticleFinder $articleFinder,
         private ArticleService $articleService

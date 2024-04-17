@@ -1571,10 +1571,11 @@ class App
 
             $this->di->register(new IdentityUser());
             $this->di->register(new I18n());
+            $this->di->register($this->configuration);
             $this->di->register($request);
             $this->di->register($response);
 
-            $this->configureApp($request);
+            $this->configureApp();
 
             $classCache = new VariableCache($this->directory . '/.cache', 'classes');
             $routeCache = new VariableCache($this->directory . '/.cache', "routes");
@@ -1636,11 +1637,10 @@ class App
         $this->routes = array_merge($routes, $this->routes);
     }
 
-    private function configureApp(Request $request): void
+    private function configureApp(): void
     {
         if ($this->lazyConfiguration != null) {
-            $closure = $this->lazyConfiguration;
-            $closure($this->configuration, $request, $this->di);
+            $this->runCallable($this->lazyConfiguration);
         }
 
         if ($this->configuration->settingsFilePath != null) {

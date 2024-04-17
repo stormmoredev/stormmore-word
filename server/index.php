@@ -1,6 +1,6 @@
 <?php
 
-require("../storm.php");
+require("../stormmore.php");
 
 use authentication\AuthenticationCookie;
 use authentication\StormUser;
@@ -11,6 +11,7 @@ $app = app('../src');
 
 $app->addConfiguration(function(AppConfiguration $configuration,
                                 Request $request,
+                                I18n $i18n,
                                 Di $di)
 {
     $settings = new Settings();
@@ -19,7 +20,6 @@ $app->addConfiguration(function(AppConfiguration $configuration,
     $database = new Database($settings->database->getConnection());
 
     $language = $settings->getApplicationLanguage($request->getAcceptedLanguages());
-    $i18n = $di->resolve(I18n::class);
     $i18n->loadLangFile("@/translations/lang/$language->primary.json");
     $i18n->loadLocalFile("@/translations/local/$language->local.json");
 
