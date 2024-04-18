@@ -19,7 +19,7 @@
     <div class="mt-16 sm:mt-20">
         <div class="md:border-l md:border-gray-100 md:pl-6 md:dark:border-zinc-700/40">
             <div class="flex max-w-3xl flex-col space-y-16">
-                @foreach($bag->articles as $article)
+                @foreach($articles as $article)
                 <article class="md:grid md:grid-cols-4 md:items-baseline">
                     <div class="md:col-span-3 group relative flex flex-col items-start">
                         <h2 class="text-base font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">

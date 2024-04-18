@@ -15,17 +15,17 @@
 
             <div class="text-base text-zinc-400 dark:text-zinc-500">
                 <time>
-                    <span class="ml-3">{{ $bag->article->published_at | date d MMMM  Y }}</span>
+                    <span class="ml-3">{{ $article->published_at | date d MMMM  Y }}</span>
                 </time>
-                <span>| {{ $bag->article->author_name }} </span>
+                <span>| {{ $article->author_name }} </span>
             </div>
         </header>
         <div class="text-zinc-600">
-            {{ $bag->article->content }}
+            {{ $article->content }}
         </div>
     </article>
 
-    @if ($bag->settings->comments->enabled)
+    @if ($settings->comments->enabled)
     <div class="mt-12">
         @if (Flash::isset('comment-success'))
         <div class="mb-7 flex flex-row w-full px-4 py-4 text-base shadow-md
@@ -50,7 +50,7 @@
     </template>
     <template id="write-comment-authorized">
         <form action="/add-comment/{{ $slug }}" method="post" class="relative">
-            <input name="article-id" type="hidden" value="{{ $bag->article->id}} "/>
+            <input name="article-id" type="hidden" value="{{ $article->id }} "/>
             <div class="overflow-hidden rounded-lg border border-gray-300 shadow-sm">
                         <textarea name="content" class="block w-full resize-none border-0 p-3
                             h-36 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
@@ -79,9 +79,9 @@
     <script type="text/javascript">handleComments();</script>
     @end
 
-    @if (count($bag->comments))
+    @if (count($comments))
         <div class="mt-10">
-            @foreach($bag->comments as $comment)
+            @foreach($comments as $comment)
             <div id="comment-{{ $comment->id }}" class="flex mt-5 space-x-4 text-sm">
                 <div class="flex-none py-0">
                     <img src="https://images.unsplash.com/photo-1502685104226-ee32379fefbe?ixlib=rb-=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=facearea&amp;facepad=8&amp;w=256&amp;h=256&amp;q=80"

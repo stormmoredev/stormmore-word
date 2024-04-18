@@ -1,13 +1,14 @@
 <?php
 
+namespace frontend;
+
+use Controller, Route, Request, View;
 use authentication\StormUser;
-use frontend\ArticlesFinder;
-use frontend\CommentFinder;
 use infrastructure\settings\Settings;
 use infrastructure\Slug;
 
 #[Controller]
-readonly class Homepage
+readonly class HomeController
 {
     public function __construct(
         private StormUser      $user,
@@ -22,11 +23,13 @@ readonly class Homepage
     #[Route("/")]
     public function index(): View
     {
-        $language = $this->user->language->primary;
-        $articles = $this->articlesFinder->find($language);
-        $data = ['articles' => $articles];
+        $lang = $this->user->language->primary;
+        $article = $this->articlesFinder->find($lang);
 
-        return view("@frontend/home", $data);
+        $view = view("@frontend/home");
+        $view->articles = $article;
+
+        return $view;
     }
 
     #[Route("/:slug")]
@@ -38,10 +41,12 @@ readonly class Homepage
         $comments = $this->commentFinder->find($id);
         $article = $this->articlesFinder->findOne($id);
 
-        return view('@frontend/article', [
-            'slug' => $slug,
-            'article' => $article,
-            'comments' => $comments,
-            'settings' => $this->settings]);
+        $view = view('@frontend/article');
+        $view->slug = $slug;
+        $view->article = $article;
+        $view->comments = $comments;
+        $view->settings = $this->settings;
+
+        return $view;
     }
 }

@@ -24,7 +24,7 @@ RUN docker-php-ext-install intl
 
 FROM storm as cms
 WORKDIR /usr/dev
-COPY storm.php /usr/dev/storm.php
+COPY stormmore.php /usr/dev/stormmore.php
 COPY src/ /usr/dev/src
 COPY server/ /usr/dev/server
 copy vendor/ /usr/dev/vendor

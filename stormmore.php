@@ -108,16 +108,26 @@ function view($templateFileName, array|object $data = []): View
     return new View($templateFileName, $data, $addons);
 }
 
-readonly class View
+class View
 {
     private ?string $addonsFilePath;
+    private array $bag = [];
 
     public function __construct(
-        private string       $fileName,
-        private array|object $data = [],
-        string               $addonsFilePath = null)
+        private readonly string       $fileName,
+        private readonly array|object $data = [],
+        string                        $addonsFilePath = null)
     {
         $this->addonsFilePath = $addonsFilePath ? STORM::aliasPath($addonsFilePath) : null;
+    }
+
+    function __get($key)
+    {
+        return array_key_exists($key, $this->bag) ? $this->bag[$key] : null;
+    }
+    function __set(string $name, $value): void
+    {
+        $this->bag[$name] = $value;
     }
 
     function toHtml(): string
@@ -140,25 +150,19 @@ readonly class View
             $compiler->compileTo($cachedTemplateFilePath);
         }
 
-        if ($this->data != null) {
-            $data = $this->data;
-
-            if (is_object($this->data)) {
-                $bag = $this->data;
-                $data = get_object_vars($this->data);
+        $data = $this->data;
+        if (is_object($data)) {
+            $data = get_object_vars($this->data);
+        }
+        if (is_array($data)) {
+            foreach ($data as $name => $value) {
+                $this->bag[$name] = $value;
             }
-            if (is_array($this->data)) {
-                $bag = new stdClass();
-                foreach($this->data as $name => $value) {
-                    $bag->$name = $value;
-                }
-            }
-
-            extract($data, EXTR_OVERWRITE, 'wddx');
         }
 
-        ob_start();
+        extract($this->bag, EXTR_OVERWRITE, 'wddx');
 
+        ob_start();
         if ($this->addonsFilePath) {
             $expMessage = "VIEW: helpers [$this->addonsFilePath] doesn't exist";
             file_exists($this->addonsFilePath) or throw new Exception($expMessage);
@@ -1611,7 +1615,11 @@ class App
             if ($result instanceof View) {
                 $response->body = $result->toHtml();
             }
-            if (is_string($result) || is_numeric($result)) {
+            else if (is_object($result) or is_array($result))
+            {
+                $response->body = json_encode($result);
+            }
+            else if (is_string($result) || is_numeric($result)) {
                 $response->body = $result;
             }
 

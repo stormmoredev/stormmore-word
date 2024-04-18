@@ -5,6 +5,7 @@ namespace frontend;
 use authentication\StormUser;
 use Request;
 use Response;
+use Authenticated;
 use Controller;
 use Route;
 
