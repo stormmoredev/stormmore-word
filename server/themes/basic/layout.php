@@ -66,5 +66,10 @@
 </html>
 
 <template id="user-authenticated-template">
-    <a href="/signout">{{ _ Sign out }}</a>
+    <div class="flex">
+        <div id="backend-panel" class="mr-5 hidden">
+            <a href="/admin">{{ _ Panel }}</a>
+        </div>
+        <a href="/signout">{{ _ Sign out }}</a>
+    </div>
 </template>

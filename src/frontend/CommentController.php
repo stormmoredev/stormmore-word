@@ -8,6 +8,7 @@ use Response;
 use Authenticated;
 use Controller;
 use Route;
+use Redirect;
 
 #[Controller]
 #[Authenticated]
@@ -22,7 +23,7 @@ readonly class CommentController
     }
 
     #[Route("/add-comment/:slug")]
-    public function addComment(): void
+    public function addComment(): Redirect
     {
         $userId = $this->user->id;
         $slug = $this->request->getParameter('slug');
@@ -31,6 +32,6 @@ readonly class CommentController
         $commentId = $this->commentService->add($userId, $articleId, $content);
 
         $this->response->setFlashFlag('comment-success');
-        $this->response->redirect("/$slug#comment-$commentId");
+        return redirect("/$slug#comment-$commentId");
     }
 }

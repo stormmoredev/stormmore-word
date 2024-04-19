@@ -2,6 +2,5 @@
   "locale": "en-EN",
   "dateFormat": "d-MM-Y",
   "dateTimeFormat": "d-MM-Y H:mm",
-  "currency": "GBP",
-  "timeZone": "Europe/Warsaw"
+  "currency": "GBP"
 }

@@ -1,6 +1,7 @@
 .idea
 **/node_modules
 
+settings.development.json
 # misc
 .DS_Store
 *.pem

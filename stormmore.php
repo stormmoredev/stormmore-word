@@ -102,6 +102,41 @@ function url($path, $args)
     return $path;
 }
 
+function back(string $url = "/"): Redirect
+{
+    if (array_key_exists('HTTP_REFERER', $_SERVER)) {
+        return redirect($_SERVER['HTTP_REFERER']);
+    }
+
+    return redirect($url);
+}
+
+function redirect(string $url = "/"): Redirect
+{
+    return new Redirect($url);
+}
+
+class Redirect
+{
+    public ?string $location = null;
+    public ?string $body = null;
+
+    public function __construct(string $url)
+    {
+        $baseUrl = STORM::$instance->configuration->baseUrl;
+        if (str_starts_with($url, "http")) {
+            $this->location = $url;
+        } else if ($baseUrl != null and str_starts_with($baseUrl, 'http')) {
+            $this->location = $baseUrl . $url;
+        } else {
+            $this->body = "<!DOCTYPE html><html lang=\"en\"><body>
+                    <script type=\"text/javascript\">document.location.href=\"$this->redirectUrl\"</script>
+                    </body>
+                    </html>";
+        }
+    }
+}
+
 function view($templateFileName, array|object $data = []): View
 {
     $addons = STORM::$instance->configuration->viewAddons;
@@ -121,11 +156,11 @@ class View
         $this->addonsFilePath = $addonsFilePath ? STORM::aliasPath($addonsFilePath) : null;
     }
 
-    function __get($key)
+    public function __get($key)
     {
         return array_key_exists($key, $this->bag) ? $this->bag[$key] : null;
     }
-    function __set(string $name, $value): void
+    public function __set(string $name, $value): void
     {
         $this->bag[$name] = $value;
     }
@@ -296,10 +331,9 @@ function _format_date($date, $includeTime = false, $format = null): string
         $date = new DateTime($date);
     }
 
+
     $i18n = di(I18n::class);
-    $dtz = new DateTimeZone($i18n->culture->timeZone);
-    $date->setTimezone($dtz);
-    $formatter = new IntlDateFormatter($i18n->culture->locale);
+    $formatter = new IntlDateFormatter($i18n->culture->locale, timezone: $i18n->culture->timeZone);
     if ($format == null) {
         $format = $includeTime ? $i18n->culture->dateTimeFormat : $i18n->culture->dateFormat;
     }
@@ -353,11 +387,11 @@ class Language implements JsonSerializable
 
 class Culture
 {
-    public string $locale = "us-US";
+    public string $locale = "en-US";
     public string $dateFormat = "Y-m-d";
     public string $dateTimeFormat = "Y-m-d H:i";
     public string $currency = "USD";
-    public string $timeZone = "";
+    public string $timeZone;
 }
 
 class I18n
@@ -368,6 +402,7 @@ class I18n
     public function __construct()
     {
         $this->culture = new Culture();
+        $this->culture->timeZone = date_default_timezone_get();
     }
 
     public function loadLangFile($filePath): void
@@ -563,35 +598,8 @@ class Response
 {
     public int $code = 200;
     public string $redirect;
-    public string $body = "";
-
-    #[NoReturn]
-    public function redirect(string $url): void
-    {
-        $baseUrl = STORM::$instance->configuration->baseUrl;
-        if (str_starts_with($url, "http")) {
-            header("Location: $url");
-        } else if ($baseUrl != null and str_starts_with($baseUrl, 'http')) {
-            header("Location: " . $baseUrl . $url);
-        } else {
-            echo "<!DOCTYPE html><html lang=\"en\"><body>
-                    <script type=\"text/javascript\">document.location.href=\"$url\"</script>
-                    </body>
-                    </html>";
-        }
-
-        die;
-    }
-
-    #[NoReturn]
-    public function back($url): void
-    {
-        if (array_key_exists('HTTP_REFERER', $_SERVER)) {
-            $this->redirect($_SERVER['HTTP_REFERER']);
-        } else {
-            $this->redirect($url);
-        }
-    }
+    public ?string $location = null;
+    public ?string $body = null;
 
     public function setCookie($name, $value): void
     {
@@ -1151,6 +1159,11 @@ class IdentityUser
         $this->isAnonymous = false;
     }
 
+    public function hasClaims(array $claims): bool
+    {
+        return count(array_intersect($this->claims, $claims)) == count($claims);
+    }
+
     public function __get(string $key): mixed
     {
         return $this->data[$key];
@@ -1181,6 +1194,17 @@ class Route
 #[Attribute]
 class Authenticated
 {
+}
+
+#[Attribute]
+class Claim
+{
+    public array $claims = array();
+
+    public function __construct(string ...$claims)
+    {
+        $this->claims = $claims;
+    }
 }
 
 class ClassScanner
@@ -1605,15 +1629,24 @@ class App
             $executionRoute or throw new Exception("APP: route for [$request->uri] doesn't exist", 404);
             $request->addRouteParameters($executionRoute->parameters);
 
+            $result = null;
             foreach ($this->hooks['before'] as $callable) {
-                $this->runCallable($callable);
+                $result = $this->runCallable($callable);
+                if ($result != null) break;
             }
-
-            $executionRunner = new ExecutionRouteRunner($executionRoute, $this->di);
-            $result = $executionRunner->run();
+            if ($result == null)
+            {
+                $executionRunner = new ExecutionRouteRunner($executionRoute, $this->di);
+                $result = $executionRunner->run();
+            }
 
             if ($result instanceof View) {
                 $response->body = $result->toHtml();
+            }
+            else if ($result instanceof Redirect)
+            {
+                $response->location = $result->location;
+                $response->body = $result->body;
             }
             else if (is_object($result) or is_array($result))
             {
@@ -1623,6 +1656,11 @@ class App
                 $response->body = $result;
             }
 
+            if ($response->location)
+            {
+                header("Location: $response->location");
+                die;
+            }
             http_response_code($response->code);
             echo $response->body;
         } catch (Exception $e) {
@@ -1748,7 +1786,8 @@ readonly class ExecutionRouteRunner
             $class = new ReflectionClass($endpoint[0]);
             $method = $class->getMethod($endpoint[1]);
 
-            $this->authenticate($class, $method, $this->executionRoute->pattern);
+            $this->validateAuthentication($class, $method, $this->executionRoute->pattern);
+            $this->validateClaims($class, $method, $this->executionRoute->pattern);
 
             $constructor = $class->getConstructor();
             if ($constructor) {
@@ -1762,7 +1801,7 @@ readonly class ExecutionRouteRunner
         return null;
     }
 
-    private function authenticate(ReflectionClass $class, ReflectionMethod $method, $pattern): void
+    private function validateAuthentication(ReflectionClass $class, ReflectionMethod $method, $pattern): void
     {
         if (count($class->getAttributes(Authenticated::class)) or
             count($method->getAttributes(Authenticated::class))) {
@@ -1771,7 +1810,32 @@ readonly class ExecutionRouteRunner
                 throw new Exception("APP: authentication required $pattern", 401);
             }
         }
+    }
 
+    private function validateClaims(ReflectionClass $class, ReflectionMethod $method, $pattern): void
+    {
+        $classAttributes = $class->getAttributes(Claim::class);
+        $methodAttributes = $method->getAttributes(Claim::class);
+        $classClaims = $this->getClaimsFromAttribute($classAttributes);
+        $methodClaims = $this->getClaimsFromAttribute($methodAttributes);
+
+        $requiredClaims = array_merge($classClaims, $methodClaims);
+
+        if ($classAttributes or $methodAttributes) {
+            $user = $this->di->resolve(IdentityUser::class);
+            if (!$user->hasClaims($requiredClaims)) {
+                throw new Exception("APP: Claim required $pattern", 403);
+            }
+        }
+    }
+
+    private function getClaimsFromAttribute(array $attributes): array
+    {
+        if (count($attributes)) {
+            return $attributes[0]->newInstance()->claims;
+        }
+
+        return [];
     }
 }
 

@@ -3,7 +3,7 @@
 namespace backend;
 
 use authentication\AuthenticationService;
-use Controller, Route, Request, Response, Form;
+use Controller, Route, Request, Response, Form, Redirect, View;
 
 import('@/backend/users/*');
 
@@ -28,7 +28,7 @@ readonly class UserController
         return view("@backend/users/index", $viewData);
     }
 
-    function add()
+    function add(): View|Redirect
     {
         $form = new Form($this->request);
         $form->rules = [
@@ -42,13 +42,13 @@ readonly class UserController
         if ($this->request->isPost() && $form->validate()->isValid()) {
             $user = $this->request->toObject();
             $this->userService->add($user);
-            $this->response->redirect('/admin/users');
+            return redirect('/admin/users');
         }
 
         return view("@backend/users/add", ['form' => $form]);
     }
 
-    function edit()
+    function edit(): View|Redirect
     {
         $uid = $this->request['user-id'];
         $user = $this->userStore->find($uid);
@@ -61,19 +61,19 @@ readonly class UserController
             $this->request->bind($user);
             $this->userService->update($user);
             $this->response->addFlashMessage('success', "User $user->name updated.");
-            $this->response->redirect('/admin/users');
+            return redirect('/admin/users');
         }
 
         return view("@backend/users/edit", ['uid' => $uid, 'form' => $form]);
     }
 
     #[Route('resend-confirmation-email')]
-    function resendConfirmationEmail(): void
+    function resendConfirmationEmail(): Redirect
     {
         $uid = $this->request->getParameter('user-id');
         $this->authenticationService->sendConfirmationEmail($uid);
         $this->response->addFlashMessage('success', _("Confirmation email sent successfully!"));
-        $this->response->redirect(url('/admin/users/edit', ['user-id' => $uid]));
+        return redirect(url('/admin/users/edit', ['user-id' => $uid]));
     }
 }
 

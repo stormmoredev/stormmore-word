@@ -79,11 +79,10 @@ $app->addIdentityUser(function(SessionStore $sessionStore,
 $app->beforeRun(function(StormUser $user, Request $request, Response $response)
 {
     $isAdminUri = str_starts_with($request->uri, "/admin");
-    $isAdminSignInUri = $request->uri == '/admin/signin';
     $canEnterAdmin = $user->canEnterPanel();
 
-    if ($isAdminUri and !$canEnterAdmin and !$isAdminSignInUri) {
-        $response->redirect('/admin/signin');
+    if ($isAdminUri and !$canEnterAdmin) {
+        return redirect('/signin');
     }
 });
 

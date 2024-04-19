@@ -15,6 +15,7 @@ readonly class AuthenticationCookie
     {
         $jsonUser = new stdClass();
         $jsonUser->name = $user->name;
+        $jsonUser->panel = $user->role != StormUser::READER;
         Cookies::set('user', json_encode($jsonUser));
     }
 

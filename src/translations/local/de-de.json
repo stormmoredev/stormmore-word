@@ -2,6 +2,5 @@
   "locale": "de-DE",
   "dateFormat": "d-MM-Y",
   "dateTimeFormat": "d-MM-Y H:mm",
-  "currency": "EUR",
-  "timeZone": "Europe/Berlin"
+  "currency": "EUR"
 }

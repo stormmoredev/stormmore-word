@@ -12,6 +12,7 @@ use Exception;
 use Request;
 use Response;
 use Route;
+use Redirect;
 
 import ("@/authentication/validators");
 import ('@vendor/hybridauth/src/autoload');
@@ -37,7 +38,7 @@ readonly class AuthenticationController
     }
 
     #[Route("/signup/:provider")]
-    function signByProvider()
+    function signByProvider(): void
     {
         $this->settings->authentication->enabled or throw new Exception("Signing up is disabled", 500);
 
@@ -51,7 +52,7 @@ readonly class AuthenticationController
     }
 
     #[Route("/callback")]
-    function signInByProviderCallback()
+    function signInByProviderCallback(): Redirect
     {
         $providerName = $this->storage->get('providerName');
         $adapter = $this->hybridauth->authenticate($providerName);
@@ -74,7 +75,38 @@ readonly class AuthenticationController
 
         $adapter->disconnect();
         $this->storage->clear();
-        $this->response->redirect("/");
+
+        return redirect("/");
+    }
+
+    #[Route("/signin")]
+    function signin(): View|Redirect
+    {
+        $this->settings->authentication->enabled or throw new Exception("Signing in is disabled", 500);
+
+        $signInFailed = false;
+        if ($this->request->isPost()) {
+            $email = $this->request->parameters['email'];
+            $password = $this->request->parameters['password'];
+            $remember = $this->request->parameters['remember'];
+            list($sessionKey, $user) = $this->authenticationService->signInByEmail($email, $password, $remember);
+            if ($sessionKey and $user) {
+                $this->authenticationCookie->addUser($user);
+                $this->authenticationCookie->addSessionKey($sessionKey);
+                if ($user->role == StormUser::READER) {
+                    return redirect("/");
+                }
+                return redirect("/admin");
+            }
+
+            $signInFailed = true;
+        }
+
+        $view = view('@frontend/signin');
+        $view->settings = $this->settings;
+        $view->confirmStatus = null;
+        $view->signinFailed = $signInFailed;
+        return $view;
     }
 
     #[Route("/signup")]
@@ -102,32 +134,6 @@ readonly class AuthenticationController
         return view('@frontend/signup', $data);
     }
 
-    #[Route("/signin")]
-    function signin(): View
-    {
-        $this->settings->authentication->enabled or throw new Exception("Signing in is disabled", 500);
-
-        $data = [
-            'settings' => $this->settings,
-            'confirmStatus' => null,
-            'signinFailed' => false];
-        if ($this->request->isPost()) {
-            $email = $this->request->parameters['email'];
-            $password = $this->request->parameters['password'];
-            $remember = $this->request->parameters['remember'];
-            list($sessionKey, $user) = $this->authenticationService->signInByEmail($email, $password, $remember);
-            if ($sessionKey and $user) {
-                $this->authenticationCookie->addUser($user);
-                $this->authenticationCookie->addSessionKey($sessionKey);
-                $this->response->redirect("/");
-            }
-
-            $data['signinFailed'] = true;
-        }
-
-        return view('@frontend/signin', $data);
-    }
-
     #[Route("/confirm-email")]
     function confirm(): View
     {
@@ -141,36 +147,15 @@ readonly class AuthenticationController
         return view('@frontend/signin', $data);
     }
 
-    #[Route("/admin/signin")]
-    function adminSignin(): View
-    {
-        $data = ['message' => null];
-        if ($this->request->isPost()) {
-            $identity = $this->request->parameters['identity'];
-            $password = $this->request->parameters['password'];
-            $remember = $this->request->parameters['remember'];
-            list($sessionKey, $user) = $this->authenticationService->signInToPanel($identity, $password, $remember);
-            if ($sessionKey) {
-                $this->authenticationCookie->addUser($user);
-                $this->authenticationCookie->addSessionKey($sessionKey);
-                $this->response->redirect("/admin");
-            }
-
-            $data['message'] = "Password is incorrect or user doesn't exist";
-        }
-
-        return view('@backend/signin', $data);
-    }
-
     #[Route("/signout")]
-    function logout(): void
+    function logout(): Redirect
     {
         $this->authenticationCookie->delete();
-        $this->response->redirect("/");
+        return redirect("/");
     }
 
     #[Route("/language")]
-    function language(): void
+    function language(): Redirect
     {
         $userLang = $this->request->getParameter('user-lang');
         if ($userLang == '') {
@@ -178,6 +163,7 @@ readonly class AuthenticationController
         } else {
             Cookies::set('user-lang', $userLang);
         }
-        $this->response->back("/");
+
+        return back("/");
     }
 }

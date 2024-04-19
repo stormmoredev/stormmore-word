@@ -96,10 +96,7 @@ VALUES ('editor', 'Editor', 'Editor', 'editor', 'editor@editor.com', true,
 
 INSERT INTO public.articles (author_id, title, content, language, opened, is_deleted, is_published, published_at,
                              created_at, updated_at)
-VALUES (77, 'Thank you for checking out Stormmore word.', '<h3 data-placeholder="Article title" class="">Thank you for checking out Stormmore word.</h3><p data-placeholder="Write your article here..." class="">It''s on very early development stage, list of features is long, plans are big and there can be some bugs. So far it works for me as testing platform for my framework. My goal is to do it as good as it can be and in my opinion the best solution for that is write software with it and make changes depends on real scenarios, in this case "Stormmore word". That way framework will be like&nbsp;surgical knife. In first place real life requiments and then make right tools -it''s like sharping tool. There is similar technique called TDD but i''m implementing it to develop framework instead features.&nbsp;</p><p data-placeholder="Write your article here..." class="">Don''t hesitate to ask my antyhing.</p>', 'en', 0, false, false, null, '2024-04-08 07:55:58.568895 +00:00', '2024-04-08 08:42:47.000000 +00:00');
-INSERT INTO public.articles (author_id, title, content, language, opened, is_deleted, is_published, published_at,
-                             created_at, updated_at)
-VALUES (77, 'How to start ?', '<h3 data-placeholder="Article title" class="">How to start ?</h3><p data-placeholder="Write your article here..." class="">To sign in and add more entries go to <a href="/admin/signin">/admin/signin</a> and use pre-defined adminstrator account Admin:admin.</p>', 'en', 0, false, false, null, '2024-04-08 08:30:08.582123 +00:00', '2024-04-08 08:50:20.000000 +00:00');
+VALUES (77, 'Thank you for checking out Stormmore word.', '<h3>Thank you for checking out Stormmore word.</h3><p>To start editing <a href="/admin/signin">sign in</a> with predefined account (email: admin@admin.com, password: admin) .</p>', 'en', 0, false, false, null, '2024-04-08 08:30:08.582123 +00:00', '2024-04-08 08:50:20.000000 +00:00');
 
 
 

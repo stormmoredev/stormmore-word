@@ -45,6 +45,9 @@ window.onload = function() {
         let authenticatedTemplate = document.getElementById('user-authenticated-template').innerHTML;
         authenticatedTemplate = authenticatedTemplate.replace('%username%', user.name);
         el.innerHTML = authenticatedTemplate;
+        if (user.panel) {
+            document.getElementById('backend-panel').classList.remove('hidden');
+        }
     } else {
         const anonymousUserEl = document.getElementById('user-anonymous');
         if (anonymousUserEl != null) {
