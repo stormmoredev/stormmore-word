@@ -96,7 +96,7 @@ VALUES ('editor', 'Editor', 'Editor', 'editor', 'editor@editor.com', true,
 
 INSERT INTO public.articles (author_id, title, content, language, opened, is_deleted, is_published, published_at,
                              created_at, updated_at)
-VALUES (77, 'Thank you for checking out Stormmore word.', '<h3>Thank you for checking out Stormmore word.</h3><p>To start editing <a href="/admin/signin">sign in</a> with predefined account (email: admin@admin.com, password: admin) .</p>', 'en', 0, false, false, null, '2024-04-08 08:30:08.582123 +00:00', '2024-04-08 08:50:20.000000 +00:00');
+VALUES (77, 'Thank you for checking out Stormmore word.', '<h3>Thank you for checking out Stormmore word.</h3><p>To start editing <a href="/signin">sign in</a> with predefined account (email: admin@admin.com, password: admin) .</p>', 'en', 0, false, false, null, '2024-04-08 08:30:08.582123 +00:00', '2024-04-08 08:50:20.000000 +00:00');
 
 
 

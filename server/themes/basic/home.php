@@ -20,7 +20,7 @@
         <div class="md:border-l md:border-gray-100 md:pl-6 md:dark:border-zinc-700/40">
             <div class="flex max-w-3xl flex-col space-y-16">
                 @foreach($articles as $article)
-                <article class="md:grid md:grid-cols-4 md:items-baseline">
+                <article class="md:grid md:grid-cols-3 md:items-baseline">
                     <div class="md:col-span-3 group relative flex flex-col items-start">
                         <h2 class="text-base font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
                             <div class="absolute -inset-x-4 -inset-y-6 z-0 scale-95 opacity-0 transition bg-white
@@ -38,7 +38,7 @@
                                 <span class="h-4 w-0.5 rounded-full bg-zinc-200 dark:bg-zinc-500"></span>
                             </span>{{ $article->published_at }}
                         </time>
-                        <p class="relative z-10 mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                        <p class="relative prose z-10 mt-2 text-sm text-zinc-600 dark:text-zinc-400">
                             {{ $article->content }}
                         </p>
                         <div aria-hidden="true" class="relative z-10 mt-4 flex items-center

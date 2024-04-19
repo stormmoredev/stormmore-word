@@ -20,7 +20,7 @@
                 <span>| {{ $article->author_name }} </span>
             </div>
         </header>
-        <div class="text-zinc-600">
+        <div class="text-zinc-600 prose">
             {{ $article->content }}
         </div>
     </article>
