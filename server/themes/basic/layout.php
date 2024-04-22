@@ -9,25 +9,33 @@
 <head>
     <title>Storm CMS</title>
     <script type="text/javascript" src="public/script.js"></script>
-    <link rel="icon" type="image/x-icon" href="/public/storm-cms.ico">
+    <link rel="icon" type="image/x-icon" href="/public/images/storm-cms.ico">
     <link href="/public/main.css" rel="stylesheet">
 </head>
 
 <body class="flex h-full bg-zinc-50 dark:bg-black">
     <div class="flex w-full flex-col">
+
         <div class="mx-auto w-full max-w-7xl lg:px-8">
-            <div class="flex justify-end px-4 sm:px-8 lg:px-12">
-                <div class="flex justify-end m-5 text-sm font-semibold
-                        leading-6 text-sky-600 hover:text-sky-500">
-                    <div id="user-authenticated"></div>
-                    @if ($settings->authentication->enabled)
-                    <div id="user-anonymous" class="hidden">
-                        <a href="/signin">{{ _ Sign in }}</a>
+            <div class="sm:px-8 mt-8">
+                <div class="px-4 sm:px-8 lg:px-12">
+                    <div class="mx-auto max-w-2xl lg:max-w-5xl">
+                        <a class="" href="/">
+                            <img class="absolute top-0 mt-2 h-16 z-10" src="/public/images/storm-cms.png" />
+                        </a>
+                        <div class="flex justify-end m-5 text-sm font-semibold leading-6">
+                            <div id="user-authenticated"></div>
+                            @if ($settings->authentication->enabled)
+                            <div id="user-anonymous" class="hidden">
+                                <a href="/signin">{{ _ Sign in }}</a>
+                            </div>
+                            @end
+                        </div>
                     </div>
-                    @end
                 </div>
             </div>
         </div>
+
         <div class="flex w-full flex-col">
             <main class="flex-auto">
                 <div class="sm:px-8 mt-8">
@@ -68,8 +76,8 @@
 <template id="user-authenticated-template">
     <div class="flex">
         <div id="backend-panel" class="mr-5 hidden">
-            <a href="/admin">{{ _ Panel }}</a>
+            <a class="text-sky-600 hover:text-sky-500" href="/admin">{{ _ Panel }}</a>
         </div>
-        <a href="/signout">{{ _ Sign out }}</a>
+        <a  class="text-sky-600 hover:text-sky-500" href="/signout">{{ _ Sign out }}</a>
     </div>
 </template>

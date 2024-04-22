@@ -9,22 +9,16 @@ use infrastructure\Database;
 
 $app = app('../src');
 
-$app->addConfiguration(function(AppConfiguration $configuration,
-                                Request $request,
-                                I18n $i18n,
-                                Di $di)
+$app->addConfiguration(function(AppConfiguration $configuration, Di $di)
 {
     $settings = new Settings();
     SettingsLoader::load($settings, '@/settings.json');
     SettingsLoader::LoadIfExist($settings, "@/settings.$configuration->environment.json");
     $database = new Database($settings->database->getConnection());
-
-    $language = $settings->getApplicationLanguage($request->getAcceptedLanguages());
-    $i18n->loadLangFile("@/translations/lang/$language->primary.json");
-    $i18n->loadLocalFile("@/translations/local/$language->local.json");
+    $di->register($settings);
+    $di->register($database);
 
     $configuration->baseUrl = $settings->url;
-
     $configuration->errorPages = [
         500 => '@/templates/500.php',
         404 => '@/templates/404.php'];
@@ -35,9 +29,12 @@ $app->addConfiguration(function(AppConfiguration $configuration,
         '@frontend' => "../server/themes/$settings->theme",
     ];
     $configuration->viewAddons = "../server/themes/$settings->theme/addons.php";
+});
 
-    $di->register($settings);
-    $di->register($database);
+$app->addI18n(function(Request $request, Settings $settings, I18n $i18n) {
+    $language = $settings->getApplicationLanguage($request->getAcceptedLanguages());
+    $i18n->loadLangFile("@/translations/lang/$language->primary.json");
+    $i18n->loadLocalFile("@/translations/local/$language->local.json");
 });
 
 $app->addIdentityUser(function(SessionStore $sessionStore,

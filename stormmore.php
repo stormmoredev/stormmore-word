@@ -1538,6 +1538,7 @@ class SettingsLoader
 class App
 {
     private array $classes;
+    public ?closure $lazyI18n = null;
     public ?closure $lazyIdentityUser = null;
     public ?closure $lazyConfiguration = null;
     public AppConfiguration $configuration;
@@ -1586,6 +1587,11 @@ class App
         $this->lazyConfiguration = $callable;
     }
 
+    public function addI18n(callable $callable): void
+    {
+        $this->lazyI18n = $callable;
+    }
+
     public function addIdentityUser(callable $callable): void
     {
         $this->lazyIdentityUser = $callable;
@@ -1624,6 +1630,7 @@ class App
             $this->addRoutes($routes);
 
             $this->configureIdentityUser();
+            $this->configureI18n();
 
             $executionRoute = $this->findRoute($request->uri);
             $executionRoute or throw new Exception("APP: route for [$request->uri] doesn't exist", 404);
@@ -1716,6 +1723,13 @@ class App
 
             $this->di->registerAs($user, IdentityUser::class);
             $this->di->register($user);
+        }
+    }
+
+    private function configureI18n(): void
+    {
+        if ($this->lazyI18n != null) {
+            $this->runCallable($this->lazyI18n);
         }
     }
 
