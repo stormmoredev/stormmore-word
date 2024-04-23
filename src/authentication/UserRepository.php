@@ -24,13 +24,13 @@ class UserRepository
 
     function getByEmail(string $email): ?stdClass
     {
-        $query = 'SELECT id, name, email FROM users WHERE email = ?';
+        $query = 'SELECT id, name, role, photo, email FROM users WHERE email = ?';
         return $this->database->fetchOne($query, $email);
     }
 
     public function getByEmailAndPassword(string $email, string $password)
     {
-        $query = 'SELECT id, name, role, is_activated FROM users WHERE email = ? AND password = ?';
+        $query = 'SELECT id, name, role, photo, is_activated FROM users WHERE email = ? AND password = ?';
         return $this->database->fetchOne($query, $email, $password);
     }
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace frontend;
+namespace frontend\comments;
 
 use infrastructure\Database;
 
@@ -15,7 +15,7 @@ readonly class CommentFinder
     public function find($articleId): array
     {
         $query =
-            "SELECT r.id, r.content, r.created_at, u.name as author_name
+            "SELECT r.id, r.content, r.created_at, u.name as author_name, u.photo as author_photo
             FROM replies AS r
             LEFT JOIN users u on u.id = author_id
             WHERE article_id = ? and is_approved = true and is_deleted = false

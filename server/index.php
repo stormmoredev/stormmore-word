@@ -26,6 +26,8 @@ $app->addConfiguration(function(AppConfiguration $configuration, Di $di)
         '@vendor' => '../vendor',
         '@backend' => "backend/templates",
         '@backend-layout' => 'backend/templates/layout.php',
+        '@media' => "../server/media",
+        '@profile' => "../server/media/profile",
         '@frontend' => "../server/themes/$settings->theme",
     ];
     $configuration->viewAddons = "../server/themes/$settings->theme/addons.php";
@@ -53,7 +55,7 @@ $app->addIdentityUser(function(SessionStore $sessionStore,
     $session = $sessionStore->load($sessionId);
 
     if (!$session or $session->valid_to < $now) {
-        Cookies::delete('storm');
+        $authenticationCookie->delete();
         return $user;
     }
 

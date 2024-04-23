@@ -617,6 +617,34 @@ class Response
     }
 }
 
+class UploadedFile
+{
+    function __construct(
+        public string $formName,
+        public string $name,
+        public string $path,
+        public string $type,
+        public string $tmp,
+        public int $error,
+        public int $size
+    ) { }
+
+    public function isValid(): bool
+    {
+        return $this->error == 0;
+    }
+
+    public function isValidImage(): bool
+    {
+        return $this->isValid() and getimagesize($this->tmp) !== false;
+    }
+
+    public function delete(): void
+    {
+        unlink($this->tmp);
+    }
+}
+
 class Request extends ArrayObject
 {
     public string $uri;
@@ -626,6 +654,11 @@ class Request extends ArrayObject
     public array $getParameters;
     public array $postParameters;
     public array $routeParameters;
+
+    /**
+     * @type UploadedFile[]
+     */
+    public array $files;
     public string $method;
     public object $body;
     public ValidationResult $validationResult;
@@ -647,12 +680,42 @@ class Request extends ArrayObject
             $this->body = json_decode($data);
         }
 
+        $this->files = $this->parseFiles();
         $this->parameters = $this->sanitize($this->parameters);
 
         parent::__construct($this->parameters);
 
         unset($_GET);
         unset($_POST);
+    }
+
+    private function parseFiles(): array
+    {
+        $files = array();
+        foreach($_FILES as $formFieldName => $formFieldFiles) {
+            if (is_array($formFieldFiles['name'])) {
+                $size = count($formFieldFiles['name']);
+                for($i = 0; $i < $size; $i++) {
+                    $files[] = new UploadedFile($formFieldName,
+                        $formFieldFiles['name'][$i],
+                        $formFieldFiles['full_path'][$i],
+                        $formFieldFiles['type'][$i],
+                        $formFieldFiles['tmp_name'][$i],
+                        $formFieldFiles['error'][$i],
+                        $formFieldFiles['size'][$i]);
+                }
+            } else {
+                $files[] = new UploadedFile($formFieldName,
+                    $formFieldFiles['name'],
+                    $formFieldFiles['full_path'],
+                    $formFieldFiles['type'],
+                    $formFieldFiles['tmp_name'],
+                    $formFieldFiles['error'],
+                    $formFieldFiles['size']);
+            }
+        }
+
+        return $files;
     }
 
     private function sanitize(array $parameters): array
@@ -711,6 +774,50 @@ class Request extends ArrayObject
         return $defaultValue;
     }
 
+    /**
+     * @param string $name
+     * @return UploadedFile|null
+     */
+    public function getFile(string $name): UploadedFile|null
+    {
+        foreach($this->files as $file) {
+            if ($file->formName == $name) {
+                return $file;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param string $name
+     * @return UploadedFile[]
+     */
+    public function getFiles(string $name): array
+    {
+        $files = array();
+        foreach($this->files as $file) {
+            if ($file->formName == $name) {
+                $files[] = $file;
+            }
+        }
+
+        return $files;
+    }
+
+    public function hasValidFile(string $name): bool
+    {
+        return $this->getFile($name)?->isValid() ?? false;
+    }
+
+    public function hasValidImageFile(string $name): bool
+    {
+        return $this->getFile($name)?->isValidImage() ?? false;
+    }
+
+    /**
+     * @return Language[]
+     */
     public function getAcceptedLanguages(): array
     {
         if ($this->acceptedLanguages) {

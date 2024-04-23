@@ -1,9 +1,9 @@
 <?php
 
-namespace frontend;
+namespace frontend\comments;
 
-use stdClass;
 use infrastructure\settings\Settings;
+use stdClass;
 
 readonly class CommentService
 {

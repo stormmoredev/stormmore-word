@@ -11,6 +11,9 @@ services:
       target: cms
     ports:
       - "80:80"
+
+    volumes:
+      - ./server/media:/usr/dev/server/media
     develop:
       watch:
         - action: sync

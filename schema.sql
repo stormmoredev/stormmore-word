@@ -8,6 +8,7 @@ create table users
     role         varchar(32)                            not null,
     email        varchar(256)                           not null UNIQUE,
     password     char(64)                               null,
+    photo        varchar(64)                            null,
     is_activated bool                     DEFAULT false not null,
     created_at   timestamp with time zone DEFAULT now() not null,
     updated_at   timestamp with time zone DEFAULT now() not null

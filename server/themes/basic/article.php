@@ -84,8 +84,7 @@
             @foreach($comments as $comment)
             <div id="comment-{{ $comment->id }}" class="flex mt-5 space-x-4 text-sm">
                 <div class="flex-none py-0">
-                    <img src="https://images.unsplash.com/photo-1502685104226-ee32379fefbe?ixlib=rb-=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=facearea&amp;facepad=8&amp;w=256&amp;h=256&amp;q=80"
-                         alt="" class="h-10 w-10 rounded-full bg-gray-100">
+                    {{ profile_photo($comment->author_name, $comment->author_photo) }}
                 </div>
                 <div class="flex-1 py-0 ">
                     <h3 class="font-medium text-gray-900">{{ $comment->author_name }}</h3>

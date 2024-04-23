@@ -1,6 +1,6 @@
 <?php
 
-namespace frontend;
+namespace frontend\comments;
 
 use infrastructure\Database;
 use stdClass;

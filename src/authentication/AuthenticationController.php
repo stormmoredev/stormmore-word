@@ -70,8 +70,7 @@ readonly class AuthenticationController
         }
 
         $sessionKey = $this->authenticationService->signIn($user);
-        $this->authenticationCookie->addSessionKey($sessionKey);
-        $this->authenticationCookie->addUser($user);
+        $this->authenticationCookie->addUser($user, $sessionKey);
 
         $adapter->disconnect();
         $this->storage->clear();
@@ -91,8 +90,7 @@ readonly class AuthenticationController
             $remember = $this->request->parameters['remember'];
             list($sessionKey, $user) = $this->authenticationService->signInByEmail($email, $password, $remember);
             if ($sessionKey and $user) {
-                $this->authenticationCookie->addUser($user);
-                $this->authenticationCookie->addSessionKey($sessionKey);
+                $this->authenticationCookie->addUser($user, $sessionKey);
                 if ($user->role == StormUser::READER) {
                     return redirect("/");
                 }

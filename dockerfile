@@ -4,18 +4,22 @@ ENV POSTGRES_USER postgres
 ENV POSTGRES_PASSWORD postgres
 COPY schema.sql /docker-entrypoint-initdb.d
 
-#FROM mongo:7 as mongo
-#ENV MONGO_INITDB_DATABASE blog
-#COPY user.seed.js /docker-entrypoint-initdb.d/
 
 FROM php:8.3-alpine as storm
 ENV APP_ENV=development
 RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
 WORKDIR /usr/dev
+
 #Postgres
 RUN apk add postgresql-dev
 RUN docker-php-ext-install pdo pdo_pgsql
 RUN docker-php-ext-enable pdo pdo_pgsql
+#imagick
+RUN apk add --no-cache ${PHPIZE_DEPS} imagemagick imagemagick-dev libjpeg-turbo
+RUN pecl install -o -f imagick
+#RUN docker-php-ext-install imagick
+RUN docker-php-ext-enable imagick
+RUN apk del --no-cache ${PHPIZE_DEPS}
 #intl
 RUN apk add icu-dev
 RUN apk add icu-data-full

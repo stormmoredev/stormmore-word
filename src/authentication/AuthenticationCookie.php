@@ -11,35 +11,30 @@ readonly class AuthenticationCookie
         private UserSecret $userSecret
     ) { }
 
-    public function addUser($user): void
+    public function addUser($user, string $sessionKey): void
     {
         $jsonUser = new stdClass();
         $jsonUser->name = $user->name;
         $jsonUser->panel = $user->role != StormUser::READER;
-        Cookies::set('user', json_encode($jsonUser));
-    }
-
-    public  function addSessionKey($sessionKey): void
-    {
-        $cipher = $this->userSecret->encrypt($sessionKey);
-
-        Cookies::set('storm', $cipher);
+        $jsonUser->photo = $user->photo;
+        $jsonUser->key = $this->userSecret->encrypt($sessionKey);
+        Cookies::set('storm-user', json_encode($jsonUser));
     }
 
     public function has(): bool
     {
-        return Cookies::has('storm');
+        return Cookies::has('storm-user');
     }
 
     public function get(): ?string
     {
-        $encrypted = Cookies::get('storm');
-        return $this->userSecret->decrypt($encrypted);
+        $user = Cookies::get('storm-user');
+        $user = json_decode($user);
+        return $this->userSecret->decrypt($user->key);
     }
 
     public function delete(): void
     {
-        Cookies::delete('storm');
-        Cookies::delete('user');
+        Cookies::delete('storm-user');
     }
 }

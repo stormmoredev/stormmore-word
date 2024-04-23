@@ -2,10 +2,16 @@
 
 namespace frontend;
 
-use Controller, Route, Request, View;
+use Authenticated;
 use authentication\StormUser;
+use Controller;
+use frontend\account\AccountService;
+use frontend\comments\CommentFinder;
 use infrastructure\settings\Settings;
 use infrastructure\Slug;
+use Request;
+use Route;
+use View;
 
 #[Controller]
 readonly class HomeController
@@ -15,7 +21,8 @@ readonly class HomeController
         private Request        $request,
         private Slug           $slug,
         private Settings       $settings,
-        private CommentFinder $commentFinder,
+        private CommentFinder  $commentFinder,
+        private AccountService $accountService,
         private ArticlesFinder $articlesFinder)
     {
     }
@@ -28,6 +35,20 @@ readonly class HomeController
 
         $view = view("@frontend/home");
         $view->articles = $article;
+
+        return $view;
+    }
+
+    #[Route("/account")]
+    #[Authenticated]
+    public function account(): View
+    {
+        $view = view('@frontend/account');
+        $view->profileUpdated = null;
+
+        if ($this->request->isPost()) {
+            $view->profileUpdated = $this->accountService->updateProfilePhoto();
+        }
 
         return $view;
     }
