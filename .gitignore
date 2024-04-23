@@ -1,6 +1,8 @@
 .idea
 **/node_modules
 
+server/media/**
+
 settings.development.json
 # misc
 .DS_Store
