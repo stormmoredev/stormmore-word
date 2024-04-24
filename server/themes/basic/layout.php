@@ -14,6 +14,8 @@
 </head>
 
 <body class="flex h-full bg-zinc-50 dark:bg-black">
+    <input type="hidden" id="max-file-size" value="{{ $settings->upload->maxFileSize }}"/>
+    <input type="hidden" id="max-photo-size" value="{{ $settings->upload->maxPhotoSize }}"/>`
     <div class="flex w-full flex-col">
         <div class="mx-auto w-full max-w-7xl lg:px-8">
             <div class="sm:px-8">
@@ -89,8 +91,8 @@
                 <a href="/admin" id="panel" class="block px-4 py-2 text-gray-600 hover:text-sky-700 hidden">
                     {{ _ Panel }}
                 </a>
-                <a href="/account" class="block px-4 py-2 text-gray-600 hover:text-sky-700">
-                    {{ _ Account }}
+                <a href="/profile" class="block px-4 py-2 text-gray-600 hover:text-sky-700">
+                    {{ _ Profile }}
                 </a>
                 <a href="/signout" class="block px-4 py-2 text-sm text-gray-600 hover:text-sky-700">
                     {{ _ Sign out }}

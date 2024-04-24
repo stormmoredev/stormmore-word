@@ -7,15 +7,12 @@ use STORM, Exception;
 
 readonly class MediaFiles
 {
-    public function writeAsProfile($photo, $name)
+    public function writeProfilePhoto($photo, $name): void
     {
         $filePath = STORM::aliasPath("@profile/$name");
 
         $imagick = new Imagick($photo->tmp);
-        $origWidth = $imagick->getImageWidth();
-        $origHeight = $imagick->getImageHeight();
-        list($newWidth, $newHeight) = $this->calculateSize($origWidth, $origHeight, 200, 200);
-        $imagick->thumbnailImage($newWidth, $newHeight);
+        $imagick->cropThumbnailImage(200, 200);
         $imagick->writeImage($filePath);
 
         $photo->delete();

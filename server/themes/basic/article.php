@@ -76,7 +76,7 @@
             </div>
         </form>
     </template>
-    <script type="text/javascript">handleComments();</script>
+    <script type="text/javascript">toggleCommentPanel();</script>
     @end
 
     @if (count($comments))

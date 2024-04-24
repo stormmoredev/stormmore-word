@@ -23,7 +23,7 @@ function getUser() {
     return JSON.parse(decodedCookie);
 }
 
-function handleComments() {
+function toggleCommentPanel() {
     const writeCommentEl = document.getElementById('write-comment');
     if (writeCommentEl != null) {
         const isAuth = isAuthenticated();
@@ -35,6 +35,33 @@ function handleComments() {
             element = document.getElementById('write-comment-not-authorized');
         }
         writeCommentEl.innerHTML = element.innerHTML;
+    }
+}
+
+function openProfilePhotoDialog() {
+    document.getElementById('upload-photo').click();
+}
+
+function changedUploadedProfilePhoto(input) {
+    const maxPhotoSize = document.getElementById('max-photo-size').value;
+    const filename = document.getElementById('profile-photo-name');
+    const invalidFile = document.getElementById('profile-photo-invalid');
+
+    if (input.files.length > 0) {
+        const size = Math.round(input.files[0].size / 1024);  // in KB
+        if (size > maxPhotoSize) {
+            filename.innerText = '';
+            invalidFile.classList.remove('hidden');
+            input.value = null;
+        }
+        else {
+            filename.innerText = input.files[0].name + " (" + size + " KB)";
+            invalidFile.classList.add('hidden');
+        }
+    }
+    else {
+        filename.innerText = '';
+        invalidFile.classList.add('hidden');
     }
 }
 
@@ -56,14 +83,15 @@ window.onload = function() {
             document.getElementById('panel').classList.remove('hidden');
         }
         let profile = null;
-        if (user.photo != null) {
+        if (user.photo != null && user.photo != '') {
             profile = document.getElementById('profile-photo');
             profile.src = "/media/profile/" + user.photo;
         } else {
             profile = document.getElementById('profile-initials');
         }
         profile.classList.remove('hidden');
-    } else {
+    }
+    else {
         const anonymousUserEl = document.getElementById('user-anonymous');
         if (anonymousUserEl != null) {
             anonymousUserEl.classList.remove('hidden');

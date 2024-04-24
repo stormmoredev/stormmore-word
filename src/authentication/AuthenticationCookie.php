@@ -21,6 +21,14 @@ readonly class AuthenticationCookie
         Cookies::set('storm-user', json_encode($jsonUser));
     }
 
+    public function update($field, $photo): void
+    {
+        $user = Cookies::get('storm-user');
+        $user = json_decode($user);
+        $user->$field = $photo;
+        Cookies::set('storm-user', json_encode($user));
+    }
+
     public function has(): bool
     {
         return Cookies::has('storm-user');

@@ -643,6 +643,33 @@ class UploadedFile
     {
         unlink($this->tmp);
     }
+
+    /**
+     * Check whether file was upload by user
+     * @return bool
+     */
+    public function wasUploaded(): bool
+    {
+        return $this->error != 4;
+    }
+
+    /**
+     * Check whether file was upload successfully
+     * @return bool
+     */
+    public function isUploaded(): bool
+    {
+        return $this->error == 0;
+    }
+
+    /**
+     * @param int $maxSize (KB)
+     * @return int
+     */
+    public function exceedSize(int $maxSize): int
+    {
+        return $this->size > ($maxSize * 1024);
+    }
 }
 
 class Request extends ArrayObject

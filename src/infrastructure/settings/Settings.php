@@ -28,7 +28,8 @@ class Settings
         public SessionSettings        $session = new SessionSettings(),
         public DatabaseSettings       $database = new DatabaseSettings(),
         public AuthenticationSettings $authentication = new AuthenticationSettings(),
-        public CommentsSettings       $comments = new CommentsSettings()
+        public CommentsSettings       $comments = new CommentsSettings(),
+        public UploadSettings         $upload = new UploadSettings()
     ) { }
 
     public function setDefaultLanguage($language): void

@@ -3,10 +3,13 @@
 namespace frontend;
 
 use Authenticated;
+use authentication\AuthenticationCookie;
 use authentication\StormUser;
 use Controller;
-use frontend\account\AccountService;
+use frontend\account\ProfileService;
+use frontend\account\ProfileStore;
 use frontend\comments\CommentFinder;
+use infrastructure\PageCriteria;
 use infrastructure\settings\Settings;
 use infrastructure\Slug;
 use Request;
@@ -22,7 +25,8 @@ readonly class HomeController
         private Slug           $slug,
         private Settings       $settings,
         private CommentFinder  $commentFinder,
-        private AccountService $accountService,
+        private ProfileService $accountService,
+        private ProfileStore   $profileStore,
         private ArticlesFinder $articlesFinder)
     {
     }
@@ -39,16 +43,25 @@ readonly class HomeController
         return $view;
     }
 
-    #[Route("/account")]
+    #[Route("/profile")]
     #[Authenticated]
-    public function account(): View
+    public function profile(): View
     {
-        $view = view('@frontend/account');
-        $view->profileUpdated = null;
+        $profile = $this->profileStore->loadProfile($this->user->id);
 
+        $profilePhotoUpdated = null;
         if ($this->request->isPost()) {
-            $view->profileUpdated = $this->accountService->updateProfilePhoto();
+            $photo = $this->request->getFile('profile-photo');
+            if ($photo->wasUploaded()) {
+                $profilePhotoUpdated = $this->accountService->updateProfilePhoto($photo);
+            }
         }
+
+        $view = view('@frontend/account');
+        $view->profileUpdated = $profilePhotoUpdated;
+        $view->profile = $profile;
+        $view->maxFileSize = $this->settings->upload->maxFileSize;
+        $view->maxPhotoSize = $this->settings->upload->maxPhotoSize;
 
         return $view;
     }

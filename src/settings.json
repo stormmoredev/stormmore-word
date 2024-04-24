@@ -26,6 +26,11 @@
     "maxChars": 1000
   },
 
+  "upload": {
+    "maxFileSize": 2048,
+    "maxPhotoSize": 2048
+  },
+
   "database": {
     "host": "database",
     "port": 5432,
