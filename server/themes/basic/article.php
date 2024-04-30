@@ -88,8 +88,8 @@
                 </div>
                 <div class="flex-1 py-0 ">
                     <h3 class="font-medium text-gray-900">{{ $comment->author_name }}</h3>
-                    <p class="text-xs" title="{{ $comment->created_at | datetime }}">
-                        {{ $comment->created_at | time_ago }}
+                    <p class="text-xs convert-to-datetime-diff"
+                       data-date="{{ $comment->created_at | js_datetime }}"
                     </p>
                     <div class="text-base mt-2 max-w-none text-gray-700">
                         <p>{{ $comment->content }}</p>

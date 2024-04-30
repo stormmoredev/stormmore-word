@@ -7,7 +7,7 @@ use authentication\StormUser;
 use Controller;
 use Redirect;
 use Request;
-use Response;
+use Response, ResponseCache;
 use Route;
 
 #[Controller]
@@ -18,6 +18,7 @@ readonly class CommentController
         private StormUser      $user,
         private Request        $request,
         private Response       $response,
+        private ResponseCache  $responseCache,
         private CommentService $commentService)
     {
     }
@@ -31,7 +32,9 @@ readonly class CommentController
         $articleId = $this->request->getParameter('article-id');
         $commentId = $this->commentService->add($userId, $articleId, $content);
 
-        $this->response->setFlashFlag('comment-success');
+        $this->responseCache->delete("$articleId-*");
+
+        //$this->response->setFlashFlag('comment-success');
         return redirect("/$slug#comment-$commentId");
     }
 }

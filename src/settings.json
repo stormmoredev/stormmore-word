@@ -12,7 +12,7 @@
   "defaultApplicationLanguage": "en-US",
   "defaultLanguage": "en",
   "applicationLanguages": ["en","en-US", "pl", "de"],
-  "enabledLanguages": ["en", "pl", "de","ga"],
+  "enabledLanguages": ["en", "pl", "de"],
 
   "editorEntry": {
     "maxChars": 3000,
@@ -24,6 +24,10 @@
     "enabled": true,
     "approvalIsRequired": false,
     "maxChars": 1000
+  },
+
+  "profile": {
+    "aboutMeMaxWords": 3
   },
 
   "upload": {

@@ -69,7 +69,11 @@ function _args(string $phrase, array $args): string
 {
     $i18n = STORM::$instance->di->I18n;
     $translatedPhrase = $i18n->translate($phrase);
-    return vsprintf($translatedPhrase, $args);
+    if (count($args)) {
+        return vsprintf($translatedPhrase, $args);
+    }
+
+    return $translatedPhrase;
 }
 
 /**
@@ -160,6 +164,7 @@ class View
     {
         return array_key_exists($key, $this->bag) ? $this->bag[$key] : null;
     }
+
     public function __set(string $name, $value): void
     {
         $this->bag[$name] = $value;
@@ -248,10 +253,10 @@ class ViewCompiler
 
     private function _compile($content): string
     {
-        $content = preg_replace_callback('/{{\s*_(.+?)}}/i', function ($matches) {
+        $content = preg_replace_callback('/{{ _ (.+?)}}/i', function ($matches) {
             $phrase = $matches[1];
             $phrase = trim($phrase);
-            $args = "['1', '2', '3']";
+            $args = "[]";
             if (!str_starts_with($phrase, '$')) {
                 if (str_contains($phrase, "|")) {
                     $parts = explode("|", $phrase);
@@ -261,6 +266,7 @@ class ViewCompiler
                 }
                 $phrase = '"' . $phrase . '"';
             }
+
             return "<?php echo _args($phrase, [$args]) ?>";
         }, $content);
 
@@ -281,12 +287,7 @@ class ViewCompiler
             return "<?php echo  $filterName ($filterArguments) ?>";
         }, $content);
 
-        $content = preg_replace_callback('/{{\s*(.+?)\s*}}/i', function ($matches) {
-            if (str_starts_with($matches[1], "$")) {
-                $name = substr($matches[1], 1);
-                if (ctype_alnum($name))
-                    return "<?php if (isset($matches[1])) echo $matches[1]; ?>";
-            }
+        $content = preg_replace_callback('/{{([\s\S]*?)}}/i', function ($matches) {
             return "<?php echo $matches[1] ?>";
         }, $content);
 
@@ -322,6 +323,16 @@ function format_date($date, $format = null): string
 function format_datetime($date, $format = null): string
 {
     return _format_date($date, true, $format);
+}
+
+function format_js_datetime($date, $format = null): string
+{
+    if (!$date) return '';
+    if (!is_object($date)) {
+        $date = new DateTime($date);
+    }
+
+    return $date->format('Y-m-d H:i:s O');
 }
 
 function _format_date($date, $includeTime = false, $format = null): string
@@ -392,6 +403,11 @@ class Culture
     public string $dateTimeFormat = "Y-m-d H:i";
     public string $currency = "USD";
     public string $timeZone;
+
+    public function getLanguage(): Language
+    {
+        return new Language($this->locale);
+    }
 }
 
 class I18n
@@ -528,16 +544,16 @@ class Di
 
 class Flash
 {
-    private static string $name = '-flash-msg';
+    private static string $name = 'flash-msg-';
 
     public static function set(string $name): void
     {
-        Cookies::set($name . self::$name, '_');
+        Cookies::set(self::$name . $name, '_');
     }
 
     public static function isset($name): bool
     {
-        $cookieName = $name . self::$name;
+        $cookieName = self::$name . $name;
         if (Cookies::has($cookieName)) {
             Cookies::delete($cookieName);
             return true;
@@ -548,18 +564,18 @@ class Flash
 
     public static function add(string $name, string $message): void
     {
-        Cookies::set($name . self::$name, $message);
+        Cookies::set(self::$name . $name, $message);
     }
 
     public static function exist($name): bool
     {
-        return Cookies::has($name . self::$name);
+        return Cookies::has(self::$name . $name);
     }
 
     public static function get($name): string
     {
         $message = null;
-        $cookieName = $name . self::$name;
+        $cookieName = self::$name . $name;
         if (Cookies::has($cookieName)) {
             $message = Cookies::get($cookieName);
             Cookies::delete($cookieName);
@@ -600,6 +616,10 @@ class Response
     public string $redirect;
     public ?string $location = null;
     public ?string $body = null;
+    /**
+     * @type string[]
+     */
+    public array $headers = [];
 
     public function setCookie($name, $value): void
     {
@@ -615,6 +635,11 @@ class Response
     {
         Flash::add($name, _($message));
     }
+
+    public function addHeader(string $name, string $value): void
+    {
+        $this->headers[$name] = $value;
+    }
 }
 
 class UploadedFile
@@ -625,9 +650,11 @@ class UploadedFile
         public string $path,
         public string $type,
         public string $tmp,
-        public int $error,
-        public int $size
-    ) { }
+        public int    $error,
+        public int    $size
+    )
+    {
+    }
 
     public function isValid(): bool
     {
@@ -719,10 +746,10 @@ class Request extends ArrayObject
     private function parseFiles(): array
     {
         $files = array();
-        foreach($_FILES as $formFieldName => $formFieldFiles) {
+        foreach ($_FILES as $formFieldName => $formFieldFiles) {
             if (is_array($formFieldFiles['name'])) {
                 $size = count($formFieldFiles['name']);
-                for($i = 0; $i < $size; $i++) {
+                for ($i = 0; $i < $size; $i++) {
                     $files[] = new UploadedFile($formFieldName,
                         $formFieldFiles['name'][$i],
                         $formFieldFiles['full_path'][$i],
@@ -807,7 +834,7 @@ class Request extends ArrayObject
      */
     public function getFile(string $name): UploadedFile|null
     {
-        foreach($this->files as $file) {
+        foreach ($this->files as $file) {
             if ($file->formName == $name) {
                 return $file;
             }
@@ -823,7 +850,7 @@ class Request extends ArrayObject
     public function getFiles(string $name): array
     {
         $files = array();
-        foreach($this->files as $file) {
+        foreach ($this->files as $file) {
             if ($file->formName == $name) {
                 $files[] = $file;
             }
@@ -1341,6 +1368,121 @@ class Claim
     }
 }
 
+class ResponseCache
+{
+    private bool $cacheRequest = false;
+
+    public function __construct(
+        private readonly AppConfiguration  $appConfiguration,
+        private readonly Request  $request,
+        private readonly Response $response,
+        private readonly I18n     $i18n
+    )
+    {
+    }
+
+    public function cache(): void
+    {
+        $this->cacheRequest = true;
+    }
+
+    public function read(): object|null
+    {
+        if (!$this->appConfiguration->cacheEnabled) return null;
+
+        $id = $this->requestToFileName($this->request);
+        $cacheFilePath = $this->cacheDir() . "/" . $id;
+        if (is_file($cacheFilePath)) {
+            $cacheFile = new stdClass();
+            $cacheFile->headers = [];
+            $cacheFile->body = null;
+
+            $file = fopen($cacheFilePath, "r");
+            $cacheFile->createdAt = fgets($file);
+            while (($line = fgets($file)) !== false) {
+                $line = trim($line);
+                if ($line === "-CONTENT:") {
+                    break;
+                }
+                $header = explode(":", $line);
+                $cacheFile->headers[$header[0]] = $header[1];
+            }
+            while (($line = fgets($file, 1024)) !== false) {
+                $cacheFile->body .= $line;
+            }
+            fclose($file);
+
+            return $cacheFile;
+        }
+
+        return null;
+    }
+
+    public function write(): void
+    {
+        if (!$this->appConfiguration->cacheEnabled) return;
+        if (!$this->cacheRequest) return;
+
+        $dir = $this->cacheDir();
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+
+        if ($this->cacheRequest and $this->response->code == 200) {
+            $id = $this->requestToFileName($this->request);
+            $filePath = $this->cacheDir() . "/" . $id;
+
+            $file = fopen($filePath, "w");
+            fwrite($file, date('m-d-Y H:i:s') . "\n");
+            fwrite($file, "Content-Encoding: gzip \n");
+            foreach ($this->response->headers as $name => $value) {
+                fwrite($file, "$name:$value\n");
+            }
+            fwrite($file, "-CONTENT:\n");
+            fwrite($file, gzencode($this->response->body));
+            fclose($file);
+        }
+    }
+
+    /**
+     * use glob function to delete files
+     * https://www.php.net/manual/en/function.glob.php
+     * @param string $pattern
+     * @return void
+     */
+    public function delete(string $pattern): void
+    {
+        $pattern = $this->cacheDir() . "/" . $pattern;
+        $files = glob($pattern);
+        foreach ($files as $file) {
+            while(file_exists($file)) {
+                if (!unlink($file)) {
+                    usleep(2000);
+                }
+            }
+        }
+    }
+
+    private function cacheDir(): string
+    {
+        $directory = $this->appConfiguration->directory;
+        return $directory . "/.cache/responses";
+    }
+
+    private function requestToFileName(Request $request): string
+    {
+        $id = $request->uri;
+        $id .= "-" . $this->i18n->culture->getLanguage()->primary;
+        if ($request->query != '') {
+            $id .= "-" . $request->query;
+        }
+        if ($id != "/") {
+            $id = substr($id, 1);
+        }
+        return str_replace("/", "-", $id);
+    }
+}
+
 class ClassScanner
 {
     private array $directories;
@@ -1578,6 +1720,7 @@ class VariableCache
 
 class AppConfiguration
 {
+    public string $directory;
     public ?string $baseUrl = null;
     public ?string $environment = null;
     public ?string $settingsClassName = null;
@@ -1585,9 +1728,11 @@ class AppConfiguration
     public array $aliases = array();
     public ?array $errorPages = null;
     public ?string $viewAddons = null;
+    public bool $cacheEnabled = true;
 
-    function __construct()
+    function __construct(string $directory)
     {
+        $this->directory = $directory;
         $this->environment = getenv("APP_ENV");
     }
 
@@ -1683,7 +1828,7 @@ class App
 
     function __construct($directory)
     {
-        $this->configuration = new AppConfiguration();
+        $this->configuration = new AppConfiguration($directory);
         $this->hooks = ['before' => [], 'after' => []];
         $this->directory = $directory;
         $this->di = new Di();
@@ -1734,16 +1879,32 @@ class App
     public function run(): void
     {
         try {
+            $i18n = new I18n();
             $request = new Request();
             $response = new Response();
+            $responseCache = new ResponseCache($this->configuration, $request, $response, $i18n);
 
             $this->di->register(new IdentityUser());
-            $this->di->register(new I18n());
+            $this->di->register($i18n);
             $this->di->register($this->configuration);
             $this->di->register($request);
             $this->di->register($response);
+            $this->di->register($responseCache);
 
             $this->configureApp();
+            $this->configureI18n();
+
+            $cachedResponse = $responseCache->read();
+            if ($cachedResponse) {
+                foreach ($cachedResponse->headers as $name => $value) {
+                    header("$name: $value");
+                }
+                if ($this->configuration->isDevelopment()) {
+                    header("cached: $cachedResponse->createdAt");
+                }
+                echo $cachedResponse->body;
+                die;
+            }
 
             $classCache = new VariableCache($this->directory . '/.cache', 'classes');
             $routeCache = new VariableCache($this->directory . '/.cache', "routes");
@@ -1764,7 +1925,6 @@ class App
             $this->addRoutes($routes);
 
             $this->configureIdentityUser();
-            $this->configureI18n();
 
             $executionRoute = $this->findRoute($request->uri);
             $executionRoute or throw new Exception("APP: route for [$request->uri] doesn't exist", 404);
@@ -1775,35 +1935,36 @@ class App
                 $result = $this->runCallable($callable);
                 if ($result != null) break;
             }
-            if ($result == null)
-            {
+            if ($result == null) {
                 $executionRunner = new ExecutionRouteRunner($executionRoute, $this->di);
                 $result = $executionRunner->run();
             }
 
             if ($result instanceof View) {
                 $response->body = $result->toHtml();
-            }
-            else if ($result instanceof Redirect)
-            {
+            } else if ($result instanceof Redirect) {
                 $response->location = $result->location;
                 $response->body = $result->body;
-            }
-            else if (is_object($result) or is_array($result))
-            {
+            } else if (is_object($result) or is_array($result)) {
+                $response->addHeader("Content-Type", "application/json; charset=utf-8");
                 $response->body = json_encode($result);
-            }
-            else if (is_string($result) || is_numeric($result)) {
+            } else if (is_string($result) || is_numeric($result)) {
                 $response->body = $result;
             }
 
-            if ($response->location)
-            {
+            if ($response->location) {
                 header("Location: $response->location");
                 die;
             }
+
             http_response_code($response->code);
+            foreach ($response->headers as $name => $value) {
+                header("$name: $value");
+            }
             echo $response->body;
+
+            $responseCache->write();
+
         } catch (Exception $e) {
             $code = (!is_int($e->getCode()) or $e->getCode() == 0) ?: 500;
             http_response_code($code);
@@ -2038,6 +2199,21 @@ class Setter
         } else if ($reflection->hasProperty($name)) {
             $var->$name = $value;
         }
+    }
+}
+
+class js
+{
+    static function i18n(array $phrases, $name): string
+    {
+        $jsarray = "<script type=\"text/javascript\">\n";
+        foreach($phrases as $phrase) {
+            $translation = _($phrase);
+            $jsarray .= $name . "['" . $phrase . "']" . " = '$translation';\n";
+        }
+        $jsarray .= "</script>\n";
+
+        return $jsarray;
     }
 }
 

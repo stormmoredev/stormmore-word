@@ -6,23 +6,24 @@ use Transliterator;
 
 class Slug
 {
-    public function build(string $title, array $parameters): string
+    public function article($id, $title): string
     {
-        $rules = ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove; :: Lower(); :: NFC;';
-        $transliterator = Transliterator::createFromRules($rules, Transliterator::FORWARD);
-        $title = $transliterator->transliterate($title);
-        $title = preg_replace('/[^0-9a-zA-Z-_\s]/', "", $title);
-        $title = trim($title);
-        $title = preg_replace('/\s+/', '-', $title);
-        foreach($parameters as$val) {
-            $title .= "," . $val;
-        }
-
-        return $title;
+        $slug = $this->slugify($title);
+        return $id . '-' . $slug;
     }
 
     public function getParameters(string $slug): array
     {
-        return array_slice(explode(',', $slug), 1);
+        return array_slice(explode('-', $slug), 0);
+    }
+
+    private function slugify(string $title): string
+    {
+        $rules = ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove; :: Lower(); :: NFC;';
+        $transliterate = Transliterator::createFromRules($rules, Transliterator::FORWARD);
+        $slug = $transliterate->transliterate($title);
+        $slug = preg_replace('/[^0-9a-zA-Z-_\s]/', "", $slug);
+        $slug = trim($slug);
+        return preg_replace('/\s+/', '-', $slug);
     }
 }

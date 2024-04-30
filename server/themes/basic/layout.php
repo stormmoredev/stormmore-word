@@ -1,8 +1,9 @@
 <?php
     use infrastructure\settings\Settings;
+    use authentication\StormUser;
     $settings = di(Settings::class);
     $i18n = di(I18n::class);
-    $user = di(\authentication\StormUser::class);
+    $user = di(StormUser::class);
 ?>
 
 <html class="h-full antialiased">
@@ -15,7 +16,7 @@
 
 <body class="flex h-full bg-zinc-50 dark:bg-black">
     <input type="hidden" id="max-file-size" value="{{ $settings->upload->maxFileSize }}"/>
-    <input type="hidden" id="max-photo-size" value="{{ $settings->upload->maxPhotoSize }}"/>`
+    <input type="hidden" id="max-photo-size" value="{{ $settings->upload->maxPhotoSize }}"/>
     <div class="flex w-full flex-col">
         <div class="mx-auto w-full max-w-7xl lg:px-8">
             <div class="sm:px-8">
@@ -75,29 +76,42 @@
             </footer>
         </div>
     </div>
-</body>
-</html>
 
-<template id="user-authenticated-template">
-    <div class="flex group/menu relative">
-        <img id="profile-photo" class="hidden h-10 w-10 rounded-md" />
-        <div id="profile-initials" class="hidden inline-flex h-10 w-10 items-center justify-center
-            rounded-md bg-gray-500 cursor-pointer">
-            <span class="text-xl font-medium leading-none text-white">%username%</span>
-        </div>
+    {{ js::i18n([
+    'date_interval_y_singular',
+    'date_interval_y_plural',
+    'date_interval_m_singular',
+    'date_interval_m_plural',
+    'date_interval_d_singular',
+    'date_interval_d_plural',
+    'date_interval_h_singular',
+    'date_interval_h_plural',
+    'date_interval_i_singular',
+    'date_interval_i_plural',
+    'date_interval_seconds_ago'], 'dateDifferenceI18n'); }}
 
-        <div class="hidden group-hover/menu:block absolute top-10 z-10 right-0 w-48">
-            <div class="mt-2 bg-white origin-top-right rounded-md py-1 shadow-lg ring-1 ring-black ring-opacity-5">
-                <a href="/admin" id="panel" class="block px-4 py-2 text-gray-600 hover:text-sky-700 hidden">
-                    {{ _ Panel }}
-                </a>
-                <a href="/profile" class="block px-4 py-2 text-gray-600 hover:text-sky-700">
-                    {{ _ Profile }}
-                </a>
-                <a href="/signout" class="block px-4 py-2 text-sm text-gray-600 hover:text-sky-700">
-                    {{ _ Sign out }}
-                </a>
+    <template id="user-authenticated-template">
+        <div class="flex group/menu relative">
+            <img id="profile-photo" class="hidden h-10 w-10 rounded-md" />
+            <div id="profile-initials" class="hidden inline-flex h-10 w-10 items-center justify-center
+                rounded-md bg-gray-500 cursor-pointer">
+                <span class="text-xl font-medium leading-none text-white">%username%</span>
+            </div>
+
+            <div class="hidden group-hover/menu:block absolute top-10 z-10 right-0 w-48">
+                <div class="mt-2 bg-white origin-top-right rounded-md py-1 shadow-lg ring-1 ring-black ring-opacity-5">
+                    <a href="/admin" id="panel" class="block px-4 py-2 text-gray-600 hover:text-sky-700 hidden">
+                        {{ _ Panel }}
+                    </a>
+                    <a href="/profile" class="block px-4 py-2 text-gray-600 hover:text-sky-700">
+                        {{ _ Profile }}
+                    </a>
+                    <a href="/signout" class="block px-4 py-2 text-sm text-gray-600 hover:text-sky-700">
+                        {{ _ Sign out }}
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
-</template>
+    </template>
+</body>
+</html>

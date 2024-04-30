@@ -25,7 +25,7 @@ readonly class ArticleService
             $article->author_id = $this->user->id;
             $article->updatedAt = new DateTime();
             $article->language = $this->user->language->primary;
-            return $this->articleStore->insert($article);
+            $article->id = $this->articleStore->insert($article);
         }
     }
 

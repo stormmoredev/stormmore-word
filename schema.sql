@@ -9,6 +9,7 @@ create table users
     email        varchar(256)                           not null UNIQUE,
     password     char(64)                               null,
     photo        varchar(64)                            null,
+    about_me     text                                   null,
     is_activated bool                     DEFAULT false not null,
     created_at   timestamp with time zone DEFAULT now() not null,
     updated_at   timestamp with time zone DEFAULT now() not null

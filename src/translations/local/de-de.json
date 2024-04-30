@@ -1,6 +1,6 @@
 {
   "locale": "de-DE",
-  "dateFormat": "d-MM-Y",
-  "dateTimeFormat": "d-MM-Y H:mm",
+  "dateFormat": "d-m-Y",
+  "dateTimeFormat": "d-m-Y H:i:s",
   "currency": "EUR"
 }

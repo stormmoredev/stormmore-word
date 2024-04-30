@@ -36,4 +36,9 @@ readonly class ProfileService
 
         return true;
     }
+
+    public function updateAboutMe($aboutMe): void
+    {
+        $this->accountStore->updateAboutMe($this->stormUser->id, $aboutMe);
+    }
 }

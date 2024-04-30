@@ -1,6 +1,6 @@
 {
   "locale": "en-US",
-  "dateFormat": "Y-MM-d",
-  "dateTimeFormat": "Y-MM-d H:mm",
+  "dateFormat": "Y-m-d",
+  "dateTimeFormat": "Y-m-d H:i:s",
   "currency": "USD"
 }

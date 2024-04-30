@@ -2,7 +2,7 @@
 
 namespace backend;
 
-use Controller, Route, Request, Response, View;
+use Controller, Route, Request, ResponseCache, View;
 
 import('@/backend/articles/*');
 
@@ -14,7 +14,8 @@ readonly class ArticleController
         private Request $request,
         private ArticleStore $articleStore,
         private ArticleFinder $articleFinder,
-        private ArticleService $articleService
+        private ArticleService $articleService,
+        private ResponseCache $responseCache
     ) { }
 
     #[Route("/admin", "/admin/articles")]
@@ -34,7 +35,9 @@ readonly class ArticleController
 
     function save() {
         $article = $this->request->body;
-        return $this->articleService->save($article);
+        $this->articleService->save($article);
+        $this->responseCache->delete("$article->id-*");
+        return $article->id;
     }
 
     function publish(): void {

@@ -16,9 +16,15 @@ readonly class ProfileStore
         $this->database->update($query, $profile, $id);
     }
 
+    public function updateAboutMe(int $id, string $aboutMe): void
+    {
+        $query = "UPDATE users SET about_me = ? WHERE id = ?";
+        $this->database->update($query, $aboutMe, $id);
+    }
+
     public function loadProfile(int $id): object
     {
-        $query = "SELECT photo, name FROM users AS u WHERE u.id = ?";
+        $query = "SELECT photo, name, about_me FROM users AS u WHERE u.id = ?";
         return $this->database->fetchOne($query, $id);
     }
 }

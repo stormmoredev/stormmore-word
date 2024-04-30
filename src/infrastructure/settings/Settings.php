@@ -29,6 +29,7 @@ class Settings
         public DatabaseSettings       $database = new DatabaseSettings(),
         public AuthenticationSettings $authentication = new AuthenticationSettings(),
         public CommentsSettings       $comments = new CommentsSettings(),
+        public ProfileSettings        $profile = new ProfileSettings(),
         public UploadSettings         $upload = new UploadSettings()
     ) { }
 

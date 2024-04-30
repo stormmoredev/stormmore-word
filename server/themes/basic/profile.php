@@ -33,12 +33,26 @@
                 <div class="px-4 py-6 sm:p-8">
                     <div class="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                         <div class="col-span-full">
-                            <label for="about" class="block text-sm font-medium leading-6 text-gray-900">About</label>
+                            <div class="flex justify-between">
+                                <label for="about" class="text-sm font-medium leading-6 text-gray-900">
+                                    About
+                                </label>
+                                <div class="hidden text-sm text-gray-900">
+                                    <span>words:
+                                        <span id="about-me-count-words">0</span>
+                                        <span>/{{ $settings->profile->aboutMeMaxWords }}</span>
+                                    </span>
+                                </div>
+                            </div>
+
                             <div class="mt-2">
-                                <textarea id="about" name="about" rows="3" class="block w-full rounded-md border-0
+                                <textarea onkeydown="onAboutMeTextChanged(event)"
+                                          data-maxwords="{{ $settings->profile->aboutMeMaxWords }}"
+                                          id="about" name="about-me" rows="3"
+                                          class="block w-full rounded-md border-0
                                 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 px-2
                                 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-sky-500
-                                sm:text-sm sm:leading-6"></textarea>
+                                sm:text-sm sm:leading-6">{{ $profile->about_me}}</textarea>
                             </div>
                             <p class="mt-3 text-sm leading-6 text-gray-600">Write a few sentences about yourself.</p>
                         </div>
