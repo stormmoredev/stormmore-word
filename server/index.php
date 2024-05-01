@@ -77,21 +77,23 @@ $app->addIdentityUser(function(SessionStore $sessionStore,
     return $user;
 });
 
-$app->beforeRun(function(StormUser $user, Request $request)
+$app->beforeRun(function(StormUser $user, Request $request, Database $database)
 {
     $isAdminUri = str_starts_with($request->uri, "/admin");
     $canEnterAdmin = $user->canEnterPanel();
-
     if ($isAdminUri and !$canEnterAdmin) {
         return redirect('/signin');
     }
+
+    $database->begin();
 });
 
-$app->onSuccess(function() {
+$app->onSuccess(function(Database $database) {
+    $database->commit();
 });
 
-$app->onFailure(function () {
-    echo 'FAILED';
+$app->onFailure(function (Database $database) {
+    $database->rollback();
 });
 
 $app->addRoute("/php", function() { phpinfo(); });

@@ -1940,6 +1940,7 @@ class App
                 $executionRunner = new ExecutionRouteRunner($executionRoute, $this->di);
                 $result = $executionRunner->run();
             }
+            $this->runCallable($this->afterSuccessfulRunCallback);
 
             if ($result instanceof View) {
                 $response->body = $result->toHtml();
@@ -1965,8 +1966,6 @@ class App
             echo $response->body;
 
             $responseCache->write();
-
-            $this->runCallable($this->afterSuccessfulRunCallback);
         }
         catch (Exception $e)
         {
