@@ -77,7 +77,7 @@ $app->addIdentityUser(function(SessionStore $sessionStore,
     return $user;
 });
 
-$app->beforeRun(function(StormUser $user, Request $request, Response $response)
+$app->beforeRun(function(StormUser $user, Request $request)
 {
     $isAdminUri = str_starts_with($request->uri, "/admin");
     $canEnterAdmin = $user->canEnterPanel();
@@ -85,6 +85,13 @@ $app->beforeRun(function(StormUser $user, Request $request, Response $response)
     if ($isAdminUri and !$canEnterAdmin) {
         return redirect('/signin');
     }
+});
+
+$app->onSuccess(function() {
+});
+
+$app->onFailure(function () {
+    echo 'FAILED';
 });
 
 $app->addRoute("/php", function() { phpinfo(); });

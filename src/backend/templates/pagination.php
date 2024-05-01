@@ -1,7 +1,7 @@
 <?php
 
 $request = di(Request::class);
-$settings = di(\infrastructure\settings\Settings::class);
+$settings = di(Settings::class);
 $page = $request->getParameter('page', 1);
 $pageSize = $settings->pageSize;
 
@@ -25,8 +25,7 @@ $nextUrl = url($request->uri, $parameters);
         @if ($page < $pageNum)
         <a href="{{ $nextUrl }}" class="ml-2 btn">{{ _ Next }}</a>
         @else
-        <button class="ml-2 btn" disabled>{{
-            _ Previous }}</button>
+        <button class="ml-2 btn" disabled>{{ _ Previous }}</button>
         @end
     </div>
 </div>

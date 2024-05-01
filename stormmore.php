@@ -342,15 +342,13 @@ function _format_date($date, $includeTime = false, $format = null): string
         $date = new DateTime($date);
     }
 
-
     $i18n = di(I18n::class);
-    $formatter = new IntlDateFormatter($i18n->culture->locale, timezone: $i18n->culture->timeZone);
+    $date->setTimezone($i18n->culture->timeZone);
     if ($format == null) {
         $format = $includeTime ? $i18n->culture->dateTimeFormat : $i18n->culture->dateFormat;
     }
-    $formatter->setPattern($format);
 
-    return $formatter->format($date);
+    return $date->format($format);
 }
 
 function format_money($value, $currency = null): string
@@ -390,7 +388,7 @@ class Language implements JsonSerializable
         return false;
     }
 
-    public function jsonSerialize(): mixed
+    public function jsonSerialize(): string
     {
         return $this->code;
     }
@@ -402,7 +400,7 @@ class Culture
     public string $dateFormat = "Y-m-d";
     public string $dateTimeFormat = "Y-m-d H:i";
     public string $currency = "USD";
-    public string $timeZone;
+    public DateTimeZone $timeZone;
 
     public function getLanguage(): Language
     {
@@ -418,7 +416,7 @@ class I18n
     public function __construct()
     {
         $this->culture = new Culture();
-        $this->culture->timeZone = date_default_timezone_get();
+        $this->culture->timeZone = new DateTimeZone(date_default_timezone_get());
     }
 
     public function loadLangFile($filePath): void
@@ -1824,14 +1822,15 @@ class App
     public ?closure $lazyConfiguration = null;
     public AppConfiguration $configuration;
     public string $directory;
-    public array $hooks = [];
+    public ?closure $beforeRunCallback;
+    public ?closure $afterSuccessfulRunCallback;
+    public ?closure $afterFailedRunCallback;
     public array $routes = [];
     public Di $di;
 
     function __construct($directory)
     {
         $this->configuration = new AppConfiguration($directory);
-        $this->hooks = ['before' => [], 'after' => []];
         $this->directory = $directory;
         $this->di = new Di();
 
@@ -1850,12 +1849,17 @@ class App
 
     public function beforeRun(callable $callable): void
     {
-        $this->hooks['before'][] = $callable;
+        $this->beforeRunCallback = $callable;
     }
 
-    public function after(callable $callable): void
+    public function onSuccess(callable $callable): void
     {
-        $this->hooks['after'][] = $callable;
+        $this->afterSuccessfulRunCallback = $callable;
+    }
+
+    public function onFailure(callable $callable): void
+    {
+        $this->afterFailedRunCallback = $callable;
     }
 
     public function addRoute(string $key, $value): void
@@ -1925,18 +1929,13 @@ class App
             }
             $routes = $routeCache->load();
             $this->addRoutes($routes);
-
             $this->configureIdentityUser();
 
             $executionRoute = $this->findRoute($request->uri);
             $executionRoute or throw new Exception("APP: route for [$request->uri] doesn't exist", 404);
             $request->addRouteParameters($executionRoute->parameters);
 
-            $result = null;
-            foreach ($this->hooks['before'] as $callable) {
-                $result = $this->runCallable($callable);
-                if ($result != null) break;
-            }
+            $result = $this->runCallable($this->beforeRunCallback);
             if ($result == null) {
                 $executionRunner = new ExecutionRouteRunner($executionRoute, $this->di);
                 $result = $executionRunner->run();
@@ -1967,9 +1966,13 @@ class App
 
             $responseCache->write();
 
-        } catch (Exception $e) {
-            $code = (!is_int($e->getCode()) or $e->getCode() == 0) ? 500 : $e->getCode();
+            $this->runCallable($this->afterSuccessfulRunCallback);
+        }
+        catch (Exception $e)
+        {
+            $this->runCallable($this->afterFailedRunCallback);
 
+            $code = (!is_int($e->getCode()) or $e->getCode() == 0) ? 500 : $e->getCode();
             if ($code == 401 and $this->configuration->unauthenticatedRedirect) {
                 header("Location: {$this->configuration->unauthenticatedRedirect}");
                 die;

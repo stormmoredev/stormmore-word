@@ -5,11 +5,12 @@ use Controller;
 use infrastructure\settings\Settings;
 use Request;
 use Route;
+use View;
 
 import ('@/backend/sessions/*');
 
 #[Controller]
-class SessionController
+readonly  class SessionController
 {
     public function __construct (
         private Settings $settings,
@@ -18,7 +19,7 @@ class SessionController
     ) { }
 
     #[Route("/admin/sessions")]
-    public function index()
+    public function index(): View
     {
         $criteria = new Criteria();
         $criteria->setPage($this->request->getParameter("page", 1));
