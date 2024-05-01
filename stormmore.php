@@ -1729,6 +1729,8 @@ class AppConfiguration
     public ?array $errorPages = null;
     public ?string $viewAddons = null;
     public bool $cacheEnabled = true;
+    public ?string $unauthenticatedRedirect = null;
+    public ?string $unauthorizedRedirect = null;
 
     function __construct(string $directory)
     {
@@ -1966,7 +1968,17 @@ class App
             $responseCache->write();
 
         } catch (Exception $e) {
-            $code = (!is_int($e->getCode()) or $e->getCode() == 0) ?: 500;
+            $code = (!is_int($e->getCode()) or $e->getCode() == 0) ? 500 : $e->getCode();
+
+            if ($code == 401 and $this->configuration->unauthenticatedRedirect) {
+                header("Location: {$this->configuration->unauthenticatedRedirect}");
+                die;
+            }
+            if ($code == 403 and $this->configuration->unauthorizedRedirect) {
+                header("Location: {$this->configuration->unauthorizedRedirect}");
+                die;
+            }
+
             http_response_code($code);
 
             $errorPage = $this->configuration->errorPages ?? array();

@@ -19,6 +19,8 @@ $app->addConfiguration(function(AppConfiguration $configuration, Di $di)
     $di->register($database);
 
     $configuration->baseUrl = $settings->url;
+    $configuration->unauthorizedRedirect = "/signin";
+    $configuration->unauthenticatedRedirect = "/signin";
     $configuration->errorPages = [
         500 => '@/templates/500.php',
         404 => '@/templates/404.php'];
