@@ -2,11 +2,11 @@
 
 namespace frontend;
 
-use Authenticated;
+use Authenticate;
 use authentication\StormUser;
 use Controller;
 use frontend\account\ProfileService;
-use frontend\account\ProfileStore;
+use frontend\account\ProfileStorage;
 use frontend\comments\CommentFinder;
 use infrastructure\settings\Settings;
 use infrastructure\Slug;
@@ -28,7 +28,7 @@ readonly class HomeController
         private Settings       $settings,
         private CommentFinder  $commentFinder,
         private ProfileService $accountService,
-        private ProfileStore   $profileStore,
+        private ProfileStorage $profileStore,
         private I18n           $i18n,
         private ArticlesFinder $articlesFinder)
     {
@@ -47,13 +47,13 @@ readonly class HomeController
     }
 
     #[Route("/profile")]
-    #[Authenticated]
+    #[Authenticate]
     public function profile(): View
     {
         $profilePhotoUpdated = null;
         if ($this->request->isPost()) {
             $photo = $this->request->getFile('profile-photo');
-            if ($photo->wasUploaded()) {
+            if ($photo?->isUploaded()) {
                 $profilePhotoUpdated = $this->accountService->updateProfilePhoto($photo);
             }
 
@@ -69,6 +69,19 @@ readonly class HomeController
         $view->maxPhotoSize = $this->settings->upload->maxPhotoSize;
 
         return $view;
+    }
+
+    #[Route('/upload')]
+    public function upload(): View
+    {
+        $directory = resolve_path_alias("@profile/");
+        if ($this->request->isPost()) {
+            $file = $this->request->getFile('file');
+            if ($file?->isUploaded()) {
+                $file->move($directory, ['gen-unique-filename' => true]);
+            }
+        }
+        return view("@frontend/upload");
     }
 
     #[Route("/:slug")]

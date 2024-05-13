@@ -5,7 +5,7 @@ namespace backend;
 use DateTime;
 use infrastructure\Database;
 
-readonly class ArticleStore
+readonly class ArticleStorage
 {
     public function __construct(
         private Database $database

@@ -6,7 +6,7 @@ COPY schema.sql /docker-entrypoint-initdb.d
 
 
 FROM php:8.3-alpine as storm
-ENV APP_ENV=development
+ENV STORM_ENV=development
 RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
 WORKDIR /usr/dev
 

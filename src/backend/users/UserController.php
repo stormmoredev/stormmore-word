@@ -2,6 +2,8 @@
 
 namespace backend;
 
+use authentication\validators\RepeatedPasswordValidator;
+use authentication\validators\UniqueUsernameValidator;
 use authentication\AuthenticationService;
 use Controller, Route, Request, Response, Form, Redirect, View;
 
@@ -17,7 +19,7 @@ readonly class UserController
         private UserFinder $userFinder,
         private UserService $userService,
         private AuthenticationService $authenticationService,
-        private UserStore $userStore
+        private UserStorage $userStore
     ) { }
 
     function index()
@@ -32,13 +34,13 @@ readonly class UserController
     {
         $form = new Form($this->request);
         $form->rules = [
-            'name' => 'required unique_username',
-            'first_name' => 'required',
-            'last_name' => 'required',
-            'email' => 'required email',
-            'role' => 'required option:reader:editor:administrator',
-            'password' => 'required',
-            'password2' => 'required repeat_password'];
+            'name' =>       ['required', 'unique_username'],
+            'first_name' => ['required'],
+            'last_name' =>  ['required'],
+            'email' =>      ['required', 'email'],
+            'role' =>       ['required', 'option' => ['reader','editor', 'administrator']],
+            'password' =>   ['required'],
+            'password2' =>  ['required', RepeatedPasswordValidator::class]];
         if ($this->request->isPost() && $form->validate()->isValid()) {
             $user = $this->request->toObject();
             $this->userService->add($user);
@@ -54,11 +56,11 @@ readonly class UserController
         $user = $this->userStore->find($uid);
         $form = new Form($this->request, $user);
         $form->rules = [
-            'first_name' => 'required',
-            'last_name' => 'required',
-            'role' => 'required option:reader:editor:administrator'];
+            'first_name' => ['required'],
+            'last_name' => ['required'],
+            'role' => ['required', 'option' => ['reader' ,'editor', 'administrator']]];
         if ($this->request->isPost() && $form->validate()->isValid()) {
-            $this->request->bind($user);
+            $this->request->assign($user);
             $this->userService->update($user);
             $this->response->addFlashMessage('success', "User $user->name updated.");
             return redirect('/admin/users');

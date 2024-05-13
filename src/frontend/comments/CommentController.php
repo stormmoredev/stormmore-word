@@ -2,7 +2,7 @@
 
 namespace frontend\comments;
 
-use Authenticated;
+use Authenticate;
 use authentication\StormUser;
 use Controller;
 use Redirect;
@@ -11,7 +11,7 @@ use Response, ResponseCache;
 use Route;
 
 #[Controller]
-#[Authenticated]
+#[Authenticate]
 readonly class CommentController
 {
     public function __construct(

@@ -9,9 +9,9 @@
 <html class="h-full antialiased">
 <head>
     <title>Storm CMS</title>
-    <script type="text/javascript" src="public/script.js"></script>
-    <link rel="icon" type="image/x-icon" href="/public/images/storm-cms.ico">
-    <link href="/public/main.css" rel="stylesheet">
+    <script type="text/javascript" src="{{ url('public/script.js') }}"></script>
+    <link rel="icon" type="image/x-icon" href="{{ url('/public/images/storm-cms.ico') }}">
+    <link href="{{ url('/public/main.css') }}" rel="stylesheet">
 </head>
 
 <body class="flex h-full bg-zinc-50 dark:bg-black">
@@ -22,14 +22,15 @@
             <div class="sm:px-8">
                 <div class="px-4 sm:px-8 lg:px-12">
                     <div class="mx-auto max-w-2xl lg:max-w-5xl">
-                        <a class="" href="/">
-                            <img class="absolute top-0 mt-2 h-16 z-10" src="/public/images/storm-cms.png" />
+                        <a class="" href="{{ url('/') }}">
+                            <img class="absolute top-0 mt-2 h-16 z-10"
+                                 src="{{ url('/public/images/storm-cms.png') }}" />
                         </a>
                         <div class="flex justify-end m-5 text-sm font-semibold leading-6">
                             <div id="user-authenticated"></div>
                             @if ($settings->authentication->enabled)
                             <div id="user-anonymous" class="hidden text-sky-600 hover:text-sky-500">
-                                <a href="/signin">{{ _ Sign in }}</a>
+                                <a href=" {{ url('/signin') }} ">{{ _ Sign in }}</a>
                             </div>
                             @end
                         </div>

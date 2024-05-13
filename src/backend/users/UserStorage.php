@@ -4,7 +4,7 @@ namespace backend;
 
 use infrastructure\Database;
 
-readonly class UserStore
+readonly class UserStorage
 {
     public function __construct(
         private Database $database

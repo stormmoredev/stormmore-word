@@ -2,13 +2,14 @@
 
 namespace backend;
 
-use SessionStore;
+use SessionStorage;
+use authentication\PasswordHash;
 
 readonly class UserService
 {
     function __construct (
-        private SessionStore $sessionStore,
-        private UserStore    $userStore
+        private SessionStorage $sessionStore,
+        private UserStorage    $userStore
     ) { }
 
     public function add($user)

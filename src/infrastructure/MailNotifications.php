@@ -4,7 +4,6 @@ namespace infrastructure;
 
 use infrastructure\settings\Settings;
 use authentication\StormUser;
-use STORM;
 
 readonly class MailNotifications
 {
@@ -42,7 +41,7 @@ readonly class MailNotifications
 
     private function buildBody($content): string
     {
-        $path = STORM::aliasPath('@frontend/mail.php');
+        $path = resolve_path_alias('@frontend/mail.php');
         file_exists($path) or throw new Exception("MailNotifications: template [$path] doesn't exist");
         $template = file_get_contents($path);
         return str_replace('%content%', $content, $template);

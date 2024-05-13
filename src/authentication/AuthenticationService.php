@@ -4,13 +4,14 @@ namespace authentication;
 
 use Hybridauth\Hybridauth;
 use Hybridauth\User\Profile;
-use PHPMailer\PHPMailer\Exception;
 use stdClass;
 use DateTime;
 use infrastructure\session\SessionHash;
 use infrastructure\settings\Settings;
 use infrastructure\MailNotifications;
-use SessionStore;
+use SessionStorage;
+
+import ('@vendor/hybridauth/src/autoload');
 
 readonly class AuthenticationService
 {
@@ -18,7 +19,7 @@ readonly class AuthenticationService
     public HybridauthCookieStorage $hybridAuthStorage;
 
     function __construct (
-        private SessionStore        $sessionStore,
+        private SessionStorage      $sessionStore,
         private UserRepository      $userRepository,
         private UserTokenRepository $userTokenRepository,
         private Settings            $settings,

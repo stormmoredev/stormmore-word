@@ -8,7 +8,7 @@ use stdClass;
 readonly class CommentService
 {
     public function __construct(
-        private CommentStore $commentStore,
+        private CommentStorage $commentStore,
         private Settings       $settings)
     {
     }

@@ -13,7 +13,7 @@ readonly class ProfileService
     public function __construct(
         private StormUser            $stormUser,
         private MediaFiles           $mediaFiles,
-        private ProfileStore         $accountStore,
+        private ProfileStorage       $accountStore,
         private AuthenticationCookie $authenticationCookie,
         private Settings             $settings,
         private Request              $request
@@ -23,7 +23,7 @@ readonly class ProfileService
 
     public function updateProfilePhoto(UploadedFile $photo): bool
     {
-        if (!$photo?->isValidImage()) return false;
+        if (!$photo?->isImage()) return false;
         if ($photo?->exceedSize($this->settings->upload->maxPhotoSize)) return false;
 
         $email = $this->stormUser->email;

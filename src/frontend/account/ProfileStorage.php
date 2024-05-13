@@ -4,7 +4,7 @@ namespace frontend\account;
 
 use infrastructure\Database;
 
-readonly class ProfileStore
+readonly class ProfileStorage
 {
     function __construct (
         private Database $database

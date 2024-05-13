@@ -2,7 +2,7 @@
 
 use infrastructure\Database;
 
-class SessionStore
+class SessionStorage
 {
     public function __construct(
         private Database $database

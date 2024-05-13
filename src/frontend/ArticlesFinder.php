@@ -33,8 +33,10 @@ readonly class ArticlesFinder
             $pos = strpos($article->content, "</h3>");
             $article->content = substr($article->content, $pos + 5);
             $article->content = strip_tags($article->content);
-            $pos = strrpos($article->content, ' ');
-            $article->content = substr($article->content, 0, $pos + 1);
+            if (strlen($article->content) > $previewMaxChars) {
+                $pos = strrpos($article->content, ' ');
+                $article->content = substr($article->content, 0, $pos + 1);
+            }
             $article->slug = $this->slug->article($article->id, $article->title);
         }
 

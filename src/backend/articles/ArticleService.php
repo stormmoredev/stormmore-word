@@ -9,7 +9,7 @@ readonly class ArticleService
 {
     function __construct(
         private StormUser  $user,
-        private ArticleStore $articleStore
+        private ArticleStorage $articleStore
     ) {}
 
     function save(object $article)

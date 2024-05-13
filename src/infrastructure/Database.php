@@ -13,17 +13,21 @@ readonly class Database
 
     public function begin(): void
     {
-        $this->connection->beginTransaction();
+         $this->connection->beginTransaction();
     }
 
     public function commit(): void
     {
-        $this->connection->commit();
+        if ($this->connection->inTransaction()) {
+            $this->connection->commit();
+        }
     }
 
     public function rollback(): void
     {
-        $this->connection->rollBack();
+        if ($this->connection->inTransaction()) {
+            $this->connection->rollback();
+        }
     }
 
     public function insert(string $query, ...$args): string

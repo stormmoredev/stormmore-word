@@ -2,8 +2,6 @@
 
 namespace infrastructure;
 
-use STORM;
-
 class Languages
 {
     private array $languages = [];
@@ -11,7 +9,7 @@ class Languages
     private function getLanguages(): array
     {
         if (!count($this->languages)) {
-            $jsonFile = STORM::aliasPath('@/translations/languages.json');
+            $jsonFile = resolve_path_alias('@/translations/languages.json');
             $languages = file_get_contents($jsonFile);
             $this->languages = (array) json_decode($languages);
         }

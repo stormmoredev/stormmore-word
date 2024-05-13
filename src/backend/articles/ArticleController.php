@@ -11,11 +11,11 @@ import('@/backend/articles/*');
 readonly class ArticleController
 {
     public function __construct(
-        private Request $request,
-        private ArticleStore $articleStore,
-        private ArticleFinder $articleFinder,
+        private Request        $request,
+        private ArticleStorage $articleStore,
+        private ArticleFinder  $articleFinder,
         private ArticleService $articleService,
-        private ResponseCache $responseCache
+        private ResponseCache  $responseCache
     ) { }
 
     #[Route("/admin", "/admin/articles")]
@@ -26,7 +26,7 @@ readonly class ArticleController
 
     function edit(): View {
         $article = new ArticleDto();
-        if ($this->request->exist('article-id')) {
+        if ($this->request->hasParameter('article-id')) {
             $article->id = $this->request->parameters['article-id'];
             $article = $this->articleStore->find($article->id);
         }

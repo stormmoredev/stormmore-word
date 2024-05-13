@@ -1,63 +1,125 @@
 <?php
-/** @noinspection */
 
-use JetBrains\PhpStorm\NoReturn;
+/** @noinspection PhpUnused */
 
-class STORM
+use Random\Randomizer;
+
+/**
+ * @throws UnknownPathAliasException if path alias not found
+ */
+function resolve_path_alias(string $templatePath): string
 {
-    public static ?App $instance = NULL;
-
-    static function explode($delimiter, $string, $limit = PHP_INT_MAX): array
-    {
-        $partsUnclean = explode($delimiter, $string, $limit);
-        $parts = [];
-        foreach ($partsUnclean as $part) {
-            if ($part != "")
-                $parts[] = $part;
-        }
-        return $parts;
-    }
-
-    /**
-     * @throws Exception
-     */
-    static function aliasPath(string $templatePath): string
-    {
-        STORM::$instance !== null or throw new Exception("Alias: initialize app before");
-
-        $appDirectory = STORM::$instance->directory;
-        $aliases = STORM::$instance->configuration->aliases;
-        if (str_starts_with($templatePath, "@/")) {
-            return str_replace("@", $appDirectory, $templatePath);
-        } else if (str_starts_with($templatePath, '@')) {
-            $firstSeparator = strpos($templatePath, "/");
-            if ($firstSeparator) {
-                $alias = substr($templatePath, 0, $firstSeparator);
-                $path = substr($templatePath, $firstSeparator);
-            } else {
-                $alias = $templatePath;
-                $path = '';
-            }
-
-            array_key_exists($alias, $aliases) or throw new Exception("Alias [$alias] doesn't exist");
-            $templatePath = $appDirectory . "/" . $aliases[$alias] . $path;
+    $appDirectory = App::getInstance()->configuration->directory;
+    $aliases = App::getInstance()->configuration->aliases;
+    if (str_starts_with($templatePath, "@/")) {
+        return str_replace("@", $appDirectory, $templatePath);
+    } else if (str_starts_with($templatePath, '@')) {
+        $firstSeparator = strpos($templatePath, "/");
+        if ($firstSeparator) {
+            $alias = substr($templatePath, 0, $firstSeparator);
+            $path = substr($templatePath, $firstSeparator);
+        } else {
+            $alias = $templatePath;
+            $path = '';
         }
 
-        return $templatePath;
+        array_key_exists($alias, $aliases) or throw new UnknownPathAliasException("Alias [$alias] doesn't exist");
+        $templatePath = $appDirectory . "/" . $aliases[$alias] . $path;
     }
+
+    return $templatePath;
 }
 
-function app($appDirectory): App
+class FileNotFoundException extends Exception { }
+class UnknownPathAliasException extends Exception { }
+
+class DiResolveException extends Exception { }
+
+function is_array_key_value_equal(array $array, string $key, mixed $value): bool
 {
-    STORM::$instance = new App($appDirectory);
-    return STORM::$instance;
+    return array_key_exists($key, $array) and $array[$key] == $value;
+}
+
+function array_key_value(array $array, string $key, mixed $default): mixed
+{
+    return array_key_exists($key, $array) ? $array[$key] : $default;
+}
+
+function split_file_name_and_ext(string $filename): array
+{
+    $lastDotPos = strrpos($filename, '.');
+    if ($lastDotPos !== false and $lastDotPos > 0) {
+        $name = substr($filename, 0, $lastDotPos);
+        $ext = substr($filename, $lastDotPos + 1);
+        return [$name, $ext];
+    }
+    return [$filename, ''];
+}
+
+function concatenate_paths(string ...$paths): string
+{
+    $path = '';
+    for($i = 0; $i < count($paths); $i++) {
+        $element = $paths[$i];
+        if ($i < count($paths) - 1 and !str_ends_with($element, "/")) {
+            $element .= "/";
+        }
+        if (str_ends_with($path, "/") and str_starts_with($element, "/")) {
+            $element = substr($element, 1);
+        }
+        $path .= $element;
+    }
+    return $path;
+}
+
+/**
+ * @param int $length length with or without extension. Default 64. Optional.
+ * @param string $extension file extension. Optional.
+ * @param string $directory to check whether unique file exist or not. Optional
+ * @return string generated unique file name
+ */
+function gen_unique_file_name(int $length = 64, string $extension = '', string $directory = ''): string
+{
+    $filename = '';
+    if (!empty($extension)) {
+        $length = $length - strlen($extension) - 1;
+    }
+    do {
+        $randomizer = new Randomizer();
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $charactersLength = strlen($characters);
+        for ($i = 0; $i < $length; $i++) {
+            $filename .= $characters[$randomizer->getInt(0, $charactersLength - 1)];
+        }
+        if (!empty($extension)) {
+            $filename .= '.' . $extension;
+        }
+    } while (!empty($directory) and file_exists($directory . "/" . $filename));
+
+    return $filename;
+}
+
+function none_empty_explode($delimiter, $string, $limit = PHP_INT_MAX): array
+{
+    if (str_starts_with($string, $delimiter)) {
+        $string = substr($string, 1);
+    }
+    if (str_ends_with($string, $delimiter)) {
+        $string = substr($string, 0, -1);
+    }
+    return explode($delimiter, $string, $limit);
+}
+
+function create_storm_app($appDirectory): App
+{
+    return App::getInstance($appDirectory);
 }
 
 function di(string $key = null): mixed
 {
     if ($key == null)
-        return STORM::$instance->di;
-    return STORM::$instance->di->$key;
+        return App::getInstance()->di;
+    return App::getInstance()->di->$key;
 }
 
 function _(string $phrase, ...$args): string
@@ -67,7 +129,7 @@ function _(string $phrase, ...$args): string
 
 function _args(string $phrase, array $args): string
 {
-    $i18n = STORM::$instance->di->I18n;
+    $i18n = App::getInstance()->di->I18n;
     $translatedPhrase = $i18n->translate($phrase);
     if (count($args)) {
         return vsprintf($translatedPhrase, $args);
@@ -81,7 +143,7 @@ function _args(string $phrase, array $args): string
  */
 function import(string $file): void
 {
-    $file = STORM::aliasPath($file);
+    $file = resolve_path_alias($file);
     if (str_ends_with($file, "/*")) {
         $dir = str_replace("/*", "", $file);
         $files = scandir($dir);
@@ -97,13 +159,12 @@ function import(string $file): void
     }
 }
 
-function url($path, $args)
+function url($path, $args = array()): string
 {
     if (count($args)) {
         $path = $path . "?" . http_build_query($args);
     }
-
-    return $path;
+    return concatenate_paths(App::getInstance()->request->baseUri, $path);
 }
 
 function back(string $url = "/"): Redirect
@@ -127,38 +188,30 @@ class Redirect
 
     public function __construct(string $url)
     {
-        $baseUrl = STORM::$instance->configuration->baseUrl;
+        $baseUrl = App::getInstance()->configuration->baseUrl;
         if (str_starts_with($url, "http")) {
             $this->location = $url;
         } else if ($baseUrl != null and str_starts_with($baseUrl, 'http')) {
             $this->location = $baseUrl . $url;
-        } else {
-            $this->body = "<!DOCTYPE html><html lang=\"en\"><body>
-                    <script type=\"text/javascript\">document.location.href=\"$this->redirectUrl\"</script>
-                    </body>
-                    </html>";
         }
     }
 }
 
 function view($templateFileName, array|object $data = []): View
 {
-    $addons = STORM::$instance->configuration->viewAddons;
+    $addons = App::getInstance()->configuration->viewAddons;
     return new View($templateFileName, $data, $addons);
 }
 
 class View
 {
-    private ?string $addonsFilePath;
     private array $bag = [];
 
     public function __construct(
         private readonly string       $fileName,
         private readonly array|object $data = [],
-        string                        $addonsFilePath = null)
-    {
-        $this->addonsFilePath = $addonsFilePath ? STORM::aliasPath($addonsFilePath) : null;
-    }
+        private readonly ?string      $addonsFilePath = null)
+    { }
 
     public function __get($key)
     {
@@ -170,23 +223,28 @@ class View
         $this->bag[$name] = $value;
     }
 
-    function toHtml(): string
+    /**
+     * @throws Exception
+     */
+    public function toHtml(): string
     {
-        $env = STORM::$instance->configuration->environment;
-        $appDirectory = STORM::$instance->directory;
-        $cacheDirectory = "$appDirectory/.cache/";
+        $app = App::getInstance();
 
-        $templateFileName = STORM::aliasPath($this->fileName);
-        $templateFileName = $templateFileName . '.php';
+        $templateFilePath = resolve_path_alias($this->fileName) . ".php";
+        $cacheTemplateFileName = str_replace("../", "-", $templateFilePath);
+        $cacheTemplateFileName = str_replace("./", "-", $cacheTemplateFileName);
+        $cacheTemplateFileName = str_replace("/", "-", $cacheTemplateFileName);
+        if (str_starts_with($cacheTemplateFileName, '-')) {
+            $cacheTemplateFileName = substr($cacheTemplateFileName, 1);
+        }
+        $cacheDirectory = concatenate_paths($app->configuration->getCacheDirectory(), "/views/");
+        $cachedTemplateFilePath = concatenate_paths($cacheDirectory, $cacheTemplateFileName);
 
-        $cachedTemplateFileName = str_replace("/", "-", $templateFileName);
-        $cachedTemplateFilePath = $appDirectory . "/.cache/$cachedTemplateFileName";
+        if ($app->configuration->isDevelopment() || !file_exists($templateFilePath)) {
+            file_exists($templateFilePath) or throw new Exception("VIEW: [$templateFilePath] doesn't exist ");
 
-        if ($env == 'development' || !file_exists($cachedTemplateFilePath)) {
-            file_exists($templateFileName) or throw new Exception("VIEW: [$templateFileName] doesn't exist ");
-            if (!is_dir($cacheDirectory)) mkdir($cacheDirectory);
-
-            $compiler = new ViewCompiler($templateFileName);
+            if (!is_dir($cacheDirectory))  { mkdir($cacheDirectory, 0755, true); }
+            $compiler = new ViewCompiler($templateFilePath);
             $compiler->compileTo($cachedTemplateFilePath);
         }
 
@@ -204,11 +262,11 @@ class View
 
         ob_start();
         if ($this->addonsFilePath) {
-            $expMessage = "VIEW: helpers [$this->addonsFilePath] doesn't exist";
-            file_exists($this->addonsFilePath) or throw new Exception($expMessage);
-            require_once $this->addonsFilePath;
+            $addonsFilePath = resolve_path_alias($this->addonsFilePath);
+            $expMessage = "VIEW: helpers [$addonsFilePath] doesn't exist";
+            file_exists($addonsFilePath) or throw new Exception($expMessage);
+            require_once $addonsFilePath;
         }
-
         require_once $cachedTemplateFilePath;
         return ob_get_clean();
     }
@@ -218,33 +276,41 @@ class ViewCompiler
 {
     public string $file;
 
+
     function __construct(string $file)
     {
         $this->file = $file;
     }
 
-    public function compileTo($destination)
+    public function compileTo($destination): void
     {
         $content = $this->compile();
         file_put_contents($destination, $content);
     }
 
-    public function compile()
+    /**
+     * @throws FileNotFoundException if view/addon file not found
+     * @throws UnknownPathAliasException
+     */
+    public function compile(): string
     {
         $content = file_get_contents($this->file);
         $content = $this->_compile($content);
-        $content = $this->surround($content);
-        return $content;
+        return $this->surround($content);
     }
 
+    /**
+     * @throws UnknownPathAliasException
+     * @throws FileNotFoundException
+     */
     private function surround($content): string
     {
         preg_match('/@layout\s(.*?)\s/i', $content, $matches);
         if (!count($matches)) return $content;
 
         $content = str_replace($matches[0], '', $content);
-        $layoutFilePath = STORM::aliasPath($matches[1]);
-        file_exists($layoutFilePath) or throw new Exception("VIEW: layout [$layoutFilePath] doesn't exist");
+        $layoutFilePath = resolve_path_alias($matches[1]);
+        file_exists($layoutFilePath) or throw new FileNotFoundException("VIEW: layout [$layoutFilePath] doesn't exist");
 
         $layoutCompiler = new ViewCompiler($layoutFilePath);
         $layoutContent = $layoutCompiler->compile();
@@ -261,7 +327,7 @@ class ViewCompiler
                 if (str_contains($phrase, "|")) {
                     $parts = explode("|", $phrase);
                     $phrase = $parts[0];
-                    $args = STORM::explode(" ", $parts[1]);
+                    $args =  none_empty_explode(" ", $parts[1]);
                     $args = implode(",", $args);
                 }
                 $phrase = '"' . $phrase . '"';
@@ -271,7 +337,7 @@ class ViewCompiler
         }, $content);
 
         $content = preg_replace_callback('/{{\s*(.+?)\|\s*(.+?)}}/i', function ($matches) {
-            $filterNodes = STORM::explode(' ', trim($matches[2]), 2);
+            $filterNodes = none_empty_explode(' ', trim($matches[2]), 2);
             $filterName = 'format_' . $filterNodes[0];
             $filterArguments = $matches[1];
             if (count($filterNodes) > 1) {
@@ -298,20 +364,18 @@ class ViewCompiler
 
         $content = preg_replace_callback('/@include\s*(.*)/i', function ($matches) {
             if (str_starts_with($matches[1], '@')) {
-                $file = STORM::aliasPath($matches[1]);
+                $file = resolve_path_alias($matches[1]);
             } else {
                 $file = dirname($this->file) . "/" . trim($matches[1]);
             }
             $file = trim($file);
-            file_exists($file) or throw new Exception("VIEW: @include [$file] doesn't exist");
+            file_exists($file) or throw new FileNotFoundException("VIEW: @include [$file] doesn't exist");
             $compiler = new ViewCompiler($file);
             return $compiler->compile();
         }, $content);
 
         $content = preg_replace('/@foreach\s*\((.*)\)/i', '<?php foreach($1) { ?>', $content);
-        $content = preg_replace('/@end/i', '<?php } ?>', $content);
-
-        return $content;
+        return preg_replace('/@end/i', '<?php } ?>', $content);
     }
 }
 
@@ -325,14 +389,17 @@ function format_datetime($date, $format = null): string
     return _format_date($date, true, $format);
 }
 
-function format_js_datetime($date, $format = null): string
+function format_js_datetime($date): string
 {
     if (!$date) return '';
-    if (!is_object($date)) {
-        $date = new DateTime($date);
+    try {
+        if (!$date instanceof DateTime) {
+            $date = new DateTime($date);
+        }
+        return $date->format('Y-m-d H:i:s O');
+    } catch(Exception) {
+        return "";
     }
-
-    return $date->format('Y-m-d H:i:s O');
 }
 
 function _format_date($date, $includeTime = false, $format = null): string
@@ -419,16 +486,22 @@ class I18n
         $this->culture->timeZone = new DateTimeZone(date_default_timezone_get());
     }
 
+    /**
+     * @throws UnknownPathAliasException
+     */
     public function loadLangFile($filePath): void
     {
-        $path = STORM::aliasPath($filePath);
+        $path = resolve_path_alias($filePath);
         file_exists($path) or throw new Exception("I18n: Language file [$path] doesn't exist");
         $this->translations = json_decode(file_get_contents($path), true);
     }
 
+    /**
+     * @throws UnknownPathAliasException
+     */
     public function loadLocalFile($filePath): void
     {
-        $path = STORM::aliasPath($filePath);
+        $path = resolve_path_alias($filePath);
         file_exists($path) or throw new Exception("I18n: Locale file [$path] doesn't exist");
         $locale = json_decode(file_get_contents($path), true);
 
@@ -480,15 +553,48 @@ class Di
         return array_key_exists($key, $this->container);
     }
 
-    public function resolveReflectionFunction(ReflectionFunctionAbstract $reflection): array
+    /**
+     * @throws DiResolveException
+     */
+    public function resolveReflectionMethod(ReflectionMethod $reflection): array
     {
         $args = [];
+        try{
+            $parameters = $reflection->getParameters();
+            foreach ($parameters as $parameter) {
+                $arg = $this->resolveParameter($parameter);
+                $args[] = $arg;
+            }
+        }
+        catch(Exception $e)
+        {
+            $class = $reflection->getDeclaringClass()->getName();
+            $method = $reflection->getName();
+            $prmName = $parameter->getName();
+            $prmType = $parameter->getType();
+
+            $parameter = $prmName;
+            if ($prmType) {
+                $parameter = $prmType . ' $' . $prmName;
+            }
+            $method == "__construct" ? $method = 'Constructur' : $method = "Method [$method]";
+            $message = "Could not create [$class]. $method parameter [$parameter] can't be resolved.";
+            throw new DiResolveException($message);
+        }
+
+        return $args;
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    public function resolveReflectionFunction(ReflectionFunction $reflection): array
+    {
         $parameters = $reflection->getParameters();
         foreach ($parameters as $parameter) {
             $arg = $this->resolveParameter($parameter);
             $args[] = $arg;
         }
-
         return $args;
     }
 
@@ -498,7 +604,7 @@ class Di
      * @throws ReflectionException
      * @throws Exception
      */
-    private function resolveParameter(ReflectionParameter $parameter): mixed
+    private function resolveParameter(ReflectionParameter $parameter): object
     {
         $names = [];
         if ($parameter->hasType()) {
@@ -513,7 +619,7 @@ class Di
                 if ($constructor == null) {
                     $this->register($reflection->newInstance());
                 } else {
-                    $args = $this->resolveReflectionFunction($constructor);
+                    $args = $this->resolveReflectionMethod($constructor);
                     $instance = $reflection->newInstanceArgs($args);
                     $this->register($instance);
                 }
@@ -650,18 +756,11 @@ class UploadedFile
         public string $tmp,
         public int    $error,
         public int    $size
-    )
-    {
-    }
+    ) { }
 
-    public function isValid(): bool
+    public function isImage(): bool
     {
-        return $this->error == 0;
-    }
-
-    public function isValidImage(): bool
-    {
-        return $this->isValid() and getimagesize($this->tmp) !== false;
+        return $this->isUploaded() and getimagesize($this->tmp) !== false;
     }
 
     public function delete(): void
@@ -670,7 +769,7 @@ class UploadedFile
     }
 
     /**
-     * Check whether file was upload by user
+     * Check whether file was uploaded by user
      * @return bool
      */
     public function wasUploaded(): bool
@@ -679,7 +778,7 @@ class UploadedFile
     }
 
     /**
-     * Check whether file was upload successfully
+     * Check whether file was uploaded successfully
      * @return bool
      */
     public function isUploaded(): bool
@@ -695,11 +794,39 @@ class UploadedFile
     {
         return $this->size > ($maxSize * 1024);
     }
+
+    /**
+     * @param string $directory directory to write file
+     * @param array $options
+     * @return bool
+     */
+    public function move(string $directory, array $options = []): bool
+    {
+        $filename = $this->name;
+        if (is_array_key_value_equal($options, 'filename', true)) {
+            $filename = $options['filename'];
+        }
+        if (is_array_key_value_equal($options, 'gen-unique-filename', true)) {
+            $length = array_key_value($options, 'gen-filename-len', 64);
+            list(,$extension) = split_file_name_and_ext($this->name);
+            $filename = gen_unique_file_name($length, $extension, $directory);
+        }
+        if (move_uploaded_file($this->tmp, $directory . "/" . $filename)) {
+            $this->name = $filename;
+            return true;
+        }
+
+        return false;
+    }
 }
 
 class Request extends ArrayObject
 {
+    private RequestValidator $requestValidator;
+
     public string $uri;
+    public string $baseUri;
+    public string $requestUri;
     public string $query;
     public ?array $acceptedLanguages = null;
     public array $parameters = [];
@@ -713,19 +840,21 @@ class Request extends ArrayObject
     public array $files;
     public string $method;
     public object $body;
-    public ValidationResult $validationResult;
 
-    function __construct()
+    function __construct(CodeAssembler $codeAssembler)
     {
+        $this->requestValidator = new RequestValidator($this, $codeAssembler);
+
         $this->query = array_key_exists('QUERY_STRING', $_SERVER) ? $_SERVER['QUERY_STRING'] : "";
-        $this->uri = $this->parseRequestUri();
+        $this->uri = $_SERVER['REQUEST_URI'];
+        $this->requestUri = array_key_value($_SERVER, 'PATH_INFO', '/');
+        $this->baseUri = $this->parseBaseUri();
+
         $this->getParameters = $_GET;
         $this->postParameters = $_POST;
         $this->parameters = array_merge($_GET, $_POST);
 
         $this->method = $_SERVER['REQUEST_METHOD'];
-
-        $this->validationResult = new ValidationResult();
 
         if (array_key_exists("CONTENT_TYPE", $_SERVER) && $_SERVER["CONTENT_TYPE"] == "application/json") {
             $data = file_get_contents('php://input');
@@ -739,6 +868,13 @@ class Request extends ArrayObject
 
         unset($_GET);
         unset($_POST);
+    }
+
+    private function parseBaseUri(): string
+    {
+        $self = $_SERVER['PHP_SELF'];
+        $self = substr($self, 0, strpos($self, '.php'));
+        return substr($self, 0, strrpos($self, '/') + 1);
     }
 
     private function parseFiles(): array
@@ -785,7 +921,7 @@ class Request extends ArrayObject
         return $parameters;
     }
 
-    function addRouteParameters(array $parameters): void
+    public function addRouteParameters(array $parameters): void
     {
         $this->routeParameters = $parameters;
         $this->parameters = array_merge($this->parameters, $parameters);
@@ -812,14 +948,14 @@ class Request extends ArrayObject
         return $this->method == 'PUT';
     }
 
-    public function exist(string $name): bool
+    public function hasParameter(string $name): bool
     {
         return array_key_exists($name, $this->parameters);
     }
 
     public function getParameter(string $name, $defaultValue = null): mixed
     {
-        if ($this->exist($name)) {
+        if ($this->hasParameter($name)) {
             return $this->parameters[$name];
         }
 
@@ -857,14 +993,14 @@ class Request extends ArrayObject
         return $files;
     }
 
-    public function hasValidFile(string $name): bool
+    /**
+     * @param string $name
+     * @return bool
+     * Check whether request has uploaded valid file
+     */
+    public function hasFile(string $name): bool
     {
-        return $this->getFile($name)?->isValid() ?? false;
-    }
-
-    public function hasValidImageFile(string $name): bool
-    {
-        return $this->getFile($name)?->isValidImage() ?? false;
+        return $this->getFile($name)?->isUploaded() ?? false;
     }
 
     /**
@@ -907,67 +1043,46 @@ class Request extends ArrayObject
         return $this->parameters;
     }
 
-    public function toObject(): object
+    public function toObject(array $map = null): object
     {
         $obj = new stdClass();
-        foreach ($this->parameters as $key => $parameter) {
-            $obj->$key = $parameter;
-        }
-
+        $this->assign($obj, $map);
         return $obj;
     }
 
-    public function bind(object $var): object
+    public function assign(object $obj, array $map = null): void
     {
-        foreach ($this->parameters as $name => $value) {
-            Setter::set($var, $name, $value);
+        if ($map == null) {
+            foreach ($this->parameters as $name => $value) {
+                Setter::set($obj, $name, $value);
+            }
         }
-
-        return $var;
+        else {
+            foreach ($map as $mapKey => $mapValue) {
+                $destinationField = $mapValue;
+                if ($mapKey == 0) {
+                    $requestField = $mapValue;
+                } else {
+                    $requestField = $mapKey;
+                }
+                Setter::set($obj, $destinationField, $this->getParameter($requestField));
+            }
+        }
     }
 
-    function validate($rules): ValidationResult
+    public function validate($rules): ValidationResult
     {
-        $requestValidator = new RequestValidator($this);
-        $this->validationResult = $requestValidator->validate($rules);
-        return $this->validationResult;
+        return $this->requestValidator->validate($rules);
     }
 
-    function __get($key)
+    public function __get($key)
     {
         return $this->offsetGet($key);
     }
 
-    function __isset($key)
+    public function __isset($key)
     {
         return $this->offsetExists($key);
-    }
-
-    //returns request uri relative to application file
-    //path/on/hdd/index.php/product/first /returns product/first
-    private function parseRequestUri(): string
-    {
-        $requestUri = $_SERVER['REQUEST_URI'];
-        $pos = strpos($_SERVER['REQUEST_URI'], "?");
-        if ($pos) {
-            $requestUri = substr($requestUri, 0, $pos);
-        }
-
-        $endOfFirstSegment = strpos($requestUri, "/", 1);
-        if ($endOfFirstSegment) {
-            $getcwd = str_replace("\\", "/", getcwd());
-            $search = substr($requestUri, 0, $endOfFirstSegment);
-            $lastOccuranceOf = strripos($getcwd, $search);
-            $common = substr($getcwd, $lastOccuranceOf);
-            $requestUri = str_replace($common, "", $requestUri);
-            $requestUri = $requestUri == "" ? "/" : $requestUri;
-        }
-
-        if ($requestUri != '/' && str_ends_with($requestUri, "/")) {
-            $requestUri = substr($requestUri, 0, -1);
-        }
-
-        return $requestUri;
     }
 }
 
@@ -1028,8 +1143,7 @@ class Form
 
     function validate(): ValidationResult
     {
-        $requestValidator = new RequestValidator($this->request);
-        $this->validationResult = $requestValidator->validate($this->rules);
+        $this->validationResult = $this->request->validate($this->rules);
         return $this->validationResult;
     }
 
@@ -1040,7 +1154,7 @@ class Form
 
     public function getValue($name, $empty = null): mixed
     {
-        if ($this->request->exist($name)) {
+        if ($this->request->hasParameter($name)) {
             return Getter::get($this->request->parameters, $name);
         }
 
@@ -1068,7 +1182,7 @@ class ValidationResult
     public bool $isValid = true;
     public array $errors = [];
 
-    function addError($field, $value): void
+    function addError(string $field, $value): void
     {
         $this->isValid = false;
         $this->errors[$field] = $value;
@@ -1095,206 +1209,231 @@ class ValidationResult
 class RequestValidator
 {
     public Request $request;
+    public CodeAssembler $codeAssembler;
 
-    function __construct(Request $request)
+    function __construct(Request $request, CodeAssembler $codeAssembler)
     {
         $this->request = $request;
+        $this->codeAssembler = $codeAssembler;
     }
 
     function validate($rules): ValidationResult
     {
-        $callables = [];
-        foreach ($rules as $field => $definition) {
-            $callables[$field] = $this->toCallableArray($definition);
-        }
-
         $result = new ValidationResult();
-        foreach ($callables as $field => $callableArray) {
-            $value = null;
-            if ($this->request->exist($field)) {
-                $value = $this->request->$field;
-            }
+        foreach($rules as $fieldName => $subrules)
+        {
+            $value = $this->request->getParameter($fieldName);
+            foreach($subrules as $subruleKey => $subruleValue) {
+                if (is_array($subruleValue)) {
+                    $validatorName = $subruleKey;
+                    $arguments = $subruleValue;
+                } else {
+                    $validatorName = $subruleValue;
+                    $arguments = array();
+                }
 
-            $validationMsg = $this->validateField($callableArray, $value, $field, $this->request);
-            if (is_string($validationMsg) && !empty($validationMsg)) {
-                $result->addError($field, $validationMsg);
+                $validator = $this->instantiateValidator($validatorName);
+
+                $validatorResult = $validator->validate($value, $fieldName, $this->request->parameters, $arguments);
+                if (!$validatorResult->valid) {
+                    $result->addError($fieldName, $validatorResult->message);
+                    break;
+                }
             }
         }
-
         return $result;
     }
 
-    /**
-     * @throws Exception
-     */
-    private function validateField($callables, $value, $name, $parameters)
+    private function instantiateValidator($validatorName): IValidator
     {
-        foreach ($callables as $callable) {
-            $args = [];
-            if (str_contains($callable, ':')) {
-                $parts = explode(":", $callable);
-                $callable = $parts[0];
-                $args = array_slice($parts, 1);
-            }
-            $callable = trim($callable);
-            $callable .= '_validator';
-
-            if (!is_callable($callable)) {
-                throw new Exception("Validator: validator [$callable] doesn't exist.");
-            }
-
-            $res = $callable($value, $name, $parameters, $args);
-            if ($res) return $res;
+        if (!str_ends_with($validatorName, "Validator") and !str_contains($validatorName, "\\")) {
+            $validatorName = $this->normalizeValidatorName($validatorName);
+        }
+        $validatorName = App::getInstance()->classLoader->findFullyQualifiedName($validatorName);
+        $validator = $this->codeAssembler->assembleObject($validatorName)->build();
+        if ($validator instanceof IValidator) {
+            return $validator;
         }
 
-        return false;
+        throw new Exception("Validator: $validatorName is not a valid validator");
     }
 
-    private function toCallableArray($defintion): array
+    private function normalizeValidatorName(string $validatorName): string
     {
-        if (is_array($defintion)) {
-            $callables = [];
-            foreach ($defintion as $subdefinitions) {
-                $callables = array_merge($callables, $this->toCallableArray($subdefinitions));
+        $normalizedName = '';
+        $len = strlen($validatorName);
+        $i = 0;
+        while($i < $len) {
+            $char = $validatorName[$i];
+            if ($char == '-' or $char == '_') {
+                if ($i + 1 < $len) {
+                    $validatorName[$i + 1] = strtoupper($validatorName[$i + 1]);
+                }
+            } else {
+                $normalizedName .= $char;
             }
-            return $callables;
+            $i++;
         }
-        if (is_string($defintion)) {
-            if (str_contains($defintion, ' ')) {
-                $subrules = STORM::explode(' ', $defintion);
-                foreach ($subrules as $key => $value)
-                    $subrules[$key] = $value;
-                return $subrules;
+
+        return ucfirst($normalizedName) . 'Validator';
+    }
+}
+
+class ValidatorResult
+{
+    public function __construct(
+        public bool $valid = true,
+        public string $message = "") { }
+}
+
+interface IValidator
+{
+    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult;
+}
+
+class UncheckedValidator implements  IValidator
+{
+    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    {
+        if ($value === true) {
+            return new ValidatorResult(false, _("Field has to be unchecked"));
+        }
+        return new ValidatorResult();
+    }
+}
+
+class CheckedValidator implements  IValidator
+{
+    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    {
+        if ($value !== true) {
+            return new ValidatorResult(false, _("Field has to be checked"));
+        }
+        return new ValidatorResult();
+    }
+}
+
+class OptionValidator implements  IValidator
+{
+    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    {
+        if (!in_array($value, $args)) {
+            return new ValidatorResult(false, _("Invalid [$value] option"));
+        }
+        return new ValidatorResult();
+    }
+}
+
+class RequiredValidator implements  IValidator
+{
+    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    {
+        if (empty($value)) {
+            return new ValidatorResult(false, _("Field is required"));
+        }
+        return new ValidatorResult();
+    }
+}
+
+class AlphaValidator implements  IValidator
+{
+    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    {
+        if (!ctype_alpha($value)) {
+            return new ValidatorResult(false, _("Allowed only alphabetic characters"));
+        }
+        return new ValidatorResult();
+    }
+}
+
+class AlphaNumValidator implements  IValidator
+{
+    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    {
+        if (!ctype_alnum($value)) {
+            return new ValidatorResult(false, _("Allowed only alpha-numeric characters"));
+        }
+        return new ValidatorResult();
+    }
+}
+class NumberValidator implements  IValidator
+{
+    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    {
+        if (!is_numeric($value)) {
+            return new ValidatorResult(false, _("It's not a number"));
+        }
+        return new ValidatorResult();
+    }
+}
+
+class EmailValidator implements  IValidator
+{
+    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    {
+        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+            return new ValidatorResult(false, _("It's not a valid email address"));
+        }
+        return new ValidatorResult();
+    }
+}
+
+class MinValidator implements  IValidator
+{
+    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    {
+        if (is_numeric($value)) {
+            if (count($args) > 0 && $value < $args[0]) {
+                return new ValidatorResult(false, _("Value should be at least %s", $args[0]));
             }
-            return array($defintion);
+        } else if (is_string($value)) {
+            if (count($args) > 0 && mb_strlen($value) < $args[0]) {
+                return new ValidatorResult(false, _("Length should be at least %s", $args[0]));
+            }
         }
-
-        return [];
+        return new ValidatorResult();
     }
 }
 
-function unchecked_validator($value): ?string
+class MaxValidator implements  IValidator
 {
-    if ($value === true) {
-        return "Field has to be unchecked";
-    }
-
-    return null;
-}
-
-function checked_validator($value): ?string
-{
-    if ($value !== true) {
-        return "Field has to be checked";
-    }
-
-    return null;
-}
-
-function option_validator($value, $name, $parameters, $args): ?string
-{
-    if (!in_array($value, $args)) {
-        return "Invalid [$value] option";
-    }
-
-    return null;
-}
-
-function required_validator($value, $name, $parameters): ?string
-{
-    if (empty($value)) {
-        return _("Field is required", $name);
-    }
-
-    return null;
-}
-
-function alpha_validator($value): ?string
-{
-    if (!ctype_alpha($value)) {
-        return _("Allowed only alphabetic characters");
-    }
-
-    return null;
-}
-
-function alphanum_validator($value): ?string
-{
-    if (!ctype_alnum($value)) {
-        return _("Allowed only alpha-numeric characters");
-    }
-
-    return null;
-}
-
-function number_validator($value): ?string
-{
-    if (!is_numeric($value)) {
-        return _("It's not a number");
-    }
-
-    return null;
-}
-
-function email_validator($value): ?string
-{
-    if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
-        return _("It's not a valid email address");
-    }
-
-    return null;
-}
-
-function min_validator($value, $name, $parameters, $args): ?string
-{
-    if (is_numeric($value)) {
-        if (count($args) > 0 && $value < $args[0]) {
-            return _("Value should be at least %s", $args[0]);
+    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    {
+        if (is_string($value)) {
+            if (count($args) > 0 && mb_strlen($value) > $args[0]) {
+                return new ValidatorResult(false, _("Length shouldn't be greater then %s", $args[0]));
+            }
         }
-    } else if (is_string($value)) {
-        if (count($args) > 0 && mb_strlen($value) < $args[0]) {
-            return _("Length should be at least %s", $args[0]);
+        if (is_numeric($value)) {
+            if (count($args) > 0 && $value > $args[0]) {
+                return new ValidatorResult(false, _("Value shouldn't be greater then %s", $args[0]));
+            }
         }
+        return new ValidatorResult();
     }
-
-    return null;
 }
 
-function max_validator($value, $name, $parameters, $args): ?string
+class RangeValidator implements  IValidator
 {
-    if (is_string($value)) {
-        if (count($args) > 0 && mb_strlen($value) > $args[0]) {
-            return _("Length shouldn't be greater then %s", $args[0]);
+    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    {
+        if (is_numeric($value)) {
+            if (count($args) > 0 && $value < $args[0]) {
+                return new ValidatorResult(false, _("Value should be at least %s", $args[0]));
+            }
+            if (count($args) > 1 && $value > $args[1]) {
+                return new ValidatorResult(false, _("Value shouldn't be greater then %s", $args[1]));
+            }
+        } else if (is_string($value)) {
+            if (count($args) > 0 && mb_strlen($value) < $args[0]) {
+                return new ValidatorResult(false, _("Length should be at least %s", $args[0]));
+            }
+            if (count($args) > 1 && mb_strlen($value) > $args[1]) {
+                return new ValidatorResult(false, _("Length shouldn't be greater then %s", $args[1]));
+            }
         }
+        return new ValidatorResult();
     }
-    if (is_numeric($value)) {
-        if (count($args) > 0 && $value > $args[0]) {
-            return _("Value shouldn't be greater then %s", $args[0]);
-        }
-    }
-
-    return null;
-}
-
-function range_validator($value, $name, $parameters, $args): ?string
-{
-    if (is_numeric($value)) {
-        if (count($args) > 0 && $value < $args[0]) {
-            return _("Value should be at least %s", $args[0]);
-        }
-        if (count($args) > 1 && $value > $args[1]) {
-            return _("Value shouldn't be greater then %s", $args[1]);
-        }
-    } else if (is_string($value)) {
-        if (count($args) > 0 && mb_strlen($value) < $args[0]) {
-            return _("Length should be at least %s", $args[0]);
-        }
-        if (count($args) > 1 && mb_strlen($value) > $args[1]) {
-            return _("Length shouldn't be greater then %s", $args[1]);
-        }
-    }
-
-    return null;
 }
 
 class IdentityUser
@@ -1351,12 +1490,12 @@ class Route
 }
 
 #[Attribute]
-class Authenticated
+class Authenticate
 {
 }
 
 #[Attribute]
-class Claim
+class Authorize
 {
     public array $claims = array();
 
@@ -1371,13 +1510,11 @@ class ResponseCache
     private bool $cacheRequest = false;
 
     public function __construct(
-        private readonly AppConfiguration  $appConfiguration,
-        private readonly Request  $request,
-        private readonly Response $response,
-        private readonly I18n     $i18n
-    )
-    {
-    }
+        private readonly AppConfiguration $configuration,
+        private readonly Request          $request,
+        private readonly Response         $response,
+        private readonly I18n             $i18n
+    ) { }
 
     public function cache(): void
     {
@@ -1386,10 +1523,10 @@ class ResponseCache
 
     public function read(): object|null
     {
-        if (!$this->appConfiguration->cacheEnabled) return null;
+        if (!$this->configuration->cacheEnabled) return null;
 
         $id = $this->requestToFileName($this->request);
-        $cacheFilePath = $this->cacheDir() . "/" . $id;
+        $cacheFilePath = concatenate_paths($this->cacheDir(), $id);
         if (is_file($cacheFilePath)) {
             $cacheFile = new stdClass();
             $cacheFile->headers = [];
@@ -1418,17 +1555,17 @@ class ResponseCache
 
     public function write(): void
     {
-        if (!$this->appConfiguration->cacheEnabled) return;
+        if (!$this->configuration->cacheEnabled) return;
         if (!$this->cacheRequest) return;
 
         $dir = $this->cacheDir();
         if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
+            mkdir($dir, 0775, true);
         }
 
         if ($this->cacheRequest and $this->response->code == 200) {
             $id = $this->requestToFileName($this->request);
-            $filePath = $this->cacheDir() . "/" . $id;
+            $filePath = concatenate_paths($this->cacheDir(), $id);
 
             $file = fopen($filePath, "w");
             fwrite($file, date('m-d-Y H:i:s') . "\n");
@@ -1443,7 +1580,7 @@ class ResponseCache
     }
 
     /**
-     * use glob function to delete files
+     * glob function is used to delete files
      * https://www.php.net/manual/en/function.glob.php
      * @param string $pattern
      * @return void
@@ -1463,13 +1600,12 @@ class ResponseCache
 
     private function cacheDir(): string
     {
-        $directory = $this->appConfiguration->directory;
-        return $directory . "/.cache/responses";
+        return concatenate_paths($this->configuration->getCacheDirectory(), "/responses");
     }
 
     private function requestToFileName(Request $request): string
     {
-        $id = $request->uri;
+        $id = $request->requestUri;
         $id .= "-" . $this->i18n->culture->getLanguage()->primary;
         if ($request->query != '') {
             $id .= "-" . $request->query;
@@ -1646,7 +1782,8 @@ class RouteScanner
         $attributes = $reflection->getAttributes();
         foreach ($attributes as $attribute) {
             $name = $attribute->getName();
-            $message = "RouteScanner: Class [%s] has %s attribute but it can't be initnialized. Add 'Use %s' below your namespace or fallback to global space #[\%s]";
+            $message = "RouteScanner: Class [%s] has %s attribute but it can't be instantiate. 
+                Add 'Use %s' below your namespace or fallback to global space #[\%s]";
 
             foreach (['Controller', 'Route'] as $attributeName) {
                 if (str_ends_with($name, $attributeName) && !class_exists($name)) {
@@ -1663,14 +1800,13 @@ class RouteScanner
         foreach ($attributes as $attribute) {
             $name = $attribute->getName();
             $message = "RouteScanner: Method [%s->%s] has %s attribute but it can't be
-                    initnialized. Add 'Use %s' below your namespace or fallback to global space #[\%s]";
+                    instantiate. Add 'Use %s' below your namespace or fallback to global space #[\%s]";
 
-            foreach (['Route'] as $attributeName) {
-                if (str_ends_with($name, $attributeName) && !class_exists($name)) {
-                    $className = $reflection->getDeclaringClass()->getName();
-                    throw new Exception(sprintf($message, $className, $reflection->name,
-                        $attributeName, $attributeName, $attributeName));
-                }
+            $attributeName = 'Route';
+            if (str_ends_with($name, $attributeName) && !class_exists($name)) {
+                $className = $reflection->getDeclaringClass()->getName();
+                throw new Exception(sprintf($message, $className, $reflection->name,
+                    $attributeName, $attributeName, $attributeName));
             }
         }
     }
@@ -1688,10 +1824,10 @@ class VariableCache
     private string $cacheDirectory;
     private string $cacheFilePath;
 
-    function __construct($directory, $fileName)
+    function __construct(AppConfiguration $configuration, $fileName)
     {
-        $this->cacheDirectory = $directory;
-        $this->cacheFilePath = $directory . '/' . $fileName;
+        $this->cacheDirectory = $configuration->getCacheDirectory();
+        $this->cacheFilePath = concatenate_paths($this->cacheDirectory, $fileName);
     }
 
     function exist(): bool
@@ -1719,6 +1855,7 @@ class VariableCache
 class AppConfiguration
 {
     public string $directory;
+    public ?string $cacheDir = null;
     public ?string $baseUrl = null;
     public ?string $environment = null;
     public ?string $settingsClassName = null;
@@ -1733,7 +1870,7 @@ class AppConfiguration
     function __construct(string $directory)
     {
         $this->directory = $directory;
-        $this->environment = getenv("APP_ENV");
+        $this->environment = getenv("STORM_ENV");
     }
 
     function settings($settingClassName, $settingsPathName): void
@@ -1744,29 +1881,43 @@ class AppConfiguration
 
     public function isDevelopment(): bool
     {
-        return $this->environment == 'development';
+        return str_starts_with($this->environment, 'development');
     }
 
     public function isProduction(): bool
     {
         return $this->environment == 'production';
     }
+
+    public function getCacheDirectory(): string
+    {
+        if ($this->cacheDir) {
+            return $this->cacheDir;
+        }
+        return concatenate_paths($this->directory, "/storm-cache/");
+    }
 }
 
 class SettingsLoader
 {
+    /**
+     * @throws UnknownPathAliasException
+     */
     public static function LoadIfExist(string|object $object, $filePath): ?object
     {
-        if (file_exists(STORM::aliasPath($filePath))) {
+        if (file_exists(resolve_path_alias($filePath))) {
             return self::load($object, $filePath);
         }
 
         return null;
     }
 
+    /**
+     * @throws UnknownPathAliasException
+     */
     public static function load(string|object $object, $filePath): object
     {
-        $filePath = STORM::aliasPath($filePath);
+        $filePath = resolve_path_alias($filePath);
         is_file($filePath) or throw new Exception("SettingsLoader: File $filePath doesn't exist");
         $json = json_decode(file_get_contents($filePath));
 
@@ -1780,7 +1931,7 @@ class SettingsLoader
         return $object;
     }
 
-    private static function map($source, $destination)
+    private static function map($source, $destination): void
     {
         if ($source == null) return;
 
@@ -1792,7 +1943,7 @@ class SettingsLoader
                 continue;
             }
             $reflection->hasProperty($name) or
-            throw new Exception("SettingsLoader: settings doesn't have property [$name]");
+                throw new Exception("SettingsLoader: settings doesn't have property [$name]");
 
             $property = $reflection->getProperty($name);
             $type = $property->getType();
@@ -1809,42 +1960,124 @@ class SettingsLoader
 
     public static function save($obj): void
     {
-        $configuration = STORM::$instance->configuration;
+        $configuration = App::getInstance()->configuration;
         file_put_contents($configuration->settingsFilePath, json_encode($obj));
+    }
+}
+
+class ClassLoader
+{
+    public array $classes;
+
+    public function __construct(
+        private readonly string $appDir)
+    {
+    }
+
+    public function load(string $className): void
+    {
+        if (isset($this->classes) && array_key_exists($className, $this->classes)) {
+            require_once $this->classes[$className];
+        }
+
+        $classFileName = $this->appDir . "/" . $className . '.php';
+        $classFileName = str_replace("\\", "/", $classFileName);
+        if (file_exists($classFileName)) {
+            require_once $classFileName;
+        }
+    }
+
+    public function findFullyQualifiedName(string $className): string
+    {
+        foreach ($this->classes as $fullyQualifiedName => $fileName) {
+            if (str_ends_with($fullyQualifiedName, $className)) {
+                return $fullyQualifiedName;
+            }
+        }
+        return $className;
+    }
+}
+
+readonly class CodeAssembler
+{
+    public function __construct(private Di $di) { }
+
+    public function assembleCallable(callable $callable): CallableAssembler
+    {
+        return new CallableAssembler($callable, $this->di);
+    }
+
+    public function assembleObject($name): ObjectAssembler
+    {
+        return new ObjectAssembler($name, $this->di);
+    }
+}
+
+readonly class ObjectAssembler
+{
+    public function __construct(
+        private string $name,
+        private Di $di)
+    { }
+
+    public function build(): object
+    {
+        $args = [];
+        $class = new ReflectionClass($this->name);
+        $constructor = $class->getConstructor();
+        if ($constructor) {
+            $args = $this->di->resolveReflectionMethod($constructor);
+        }
+        return $class->newInstanceArgs($args);
+    }
+}
+
+readonly class CallableAssembler
+{
+    public function __construct(
+        private closure $closure,
+        private Di      $di) { }
+
+    public function run(): mixed
+    {
+        $reflection = new ReflectionFunction($this->closure);
+        $args = $this->di->resolveReflectionFunction($reflection);
+        return $reflection->invokeArgs($args);
     }
 }
 
 class App
 {
-    private array $classes;
-    public ?closure $lazyI18n = null;
-    public ?closure $lazyIdentityUser = null;
-    public ?closure $lazyConfiguration = null;
-    public AppConfiguration $configuration;
-    public string $directory;
-    public ?closure $beforeRunCallback;
-    public ?closure $afterSuccessfulRunCallback;
-    public ?closure $afterFailedRunCallback;
-    public array $routes = [];
+    private static ?App $instance = null;
+    private CodeAssembler $assembler;
+    private array $routes = [];
+    private ?closure $addI18nCallback = null;
+    private ?closure $addIdentityUserCallback = null;
+    private ?closure $addConfigurationCallback = null;
+    private ?closure $beforeRunCallback;
+    private ?closure $afterSuccessfulRunCallback;
+    private ?closure $afterFailedRunCallback;
     public Di $di;
+    public AppConfiguration $configuration;
+    public ClassLoader $classLoader;
+    public Request $request;
 
-    function __construct($directory)
+    private function __construct($directory)
     {
         $this->configuration = new AppConfiguration($directory);
-        $this->directory = $directory;
+        $this->configuration->directory = $directory;
+        $this->classLoader = new ClassLoader($directory);
         $this->di = new Di();
+        $this->assembler = new CodeAssembler($this->di);
+    }
 
-        spl_autoload_register(function ($className) {
-            if (isset($this->classes) && array_key_exists($className, $this->classes)) {
-                require_once $this->classes[$className];
-            }
+    public static function getInstance(?string $appDir = null): App
+    {
+        if (self::$instance == null) {
+            self::$instance = new App($appDir);
+        }
 
-            $classFileName = $this->directory . "/" . $className . '.php';
-            $classFileName = str_replace("\\", "/", $classFileName);
-            if (file_exists($classFileName)) {
-                require_once $classFileName;
-            }
-        });
+        return self::$instance;
     }
 
     public function beforeRun(callable $callable): void
@@ -1869,30 +2102,35 @@ class App
 
     public function addConfiguration(callable $callable): void
     {
-        $this->lazyConfiguration = $callable;
+        $this->addConfigurationCallback = $callable;
     }
 
     public function addI18n(callable $callable): void
     {
-        $this->lazyI18n = $callable;
+        $this->addI18nCallback = $callable;
     }
 
     public function addIdentityUser(callable $callable): void
     {
-        $this->lazyIdentityUser = $callable;
+        $this->addIdentityUserCallback = $callable;
     }
 
     public function run(): void
     {
         try {
             $i18n = new I18n();
-            $request = new Request();
+            $this->request = $request = new Request($this->assembler);
             $response = new Response();
             $responseCache = new ResponseCache($this->configuration, $request, $response, $i18n);
+
+            spl_autoload_register(function ($className) {
+                $this->classLoader->load($className);
+            });
 
             $this->di->register(new IdentityUser());
             $this->di->register($i18n);
             $this->di->register($this->configuration);
+            $this->di->register($this->classLoader);
             $this->di->register($request);
             $this->di->register($response);
             $this->di->register($responseCache);
@@ -1912,18 +2150,19 @@ class App
                 die;
             }
 
-            $classCache = new VariableCache($this->directory . '/.cache', 'classes');
-            $routeCache = new VariableCache($this->directory . '/.cache', "routes");
+            $classCache = new VariableCache($this->configuration, 'classes');
+            $routeCache = new VariableCache($this->configuration, "routes");
 
-            if ($this->configuration->environment === 'development' or !$classCache->exist()) {
-                $classScanner = new ClassScanner($this->directory);
-                $this->classes = $classScanner->scan();
-                $classCache->save($this->classes);
+            if ($this->configuration->isDevelopment() or !$classCache->exist()) {
+                $classScanner = new ClassScanner($this->configuration->directory);
+                $classes = $classScanner->scan();
+                $classCache->save($classes);
             }
-            $this->classes = $classCache->load();
+            $classes = $classCache->load();
+            $this->classLoader->classes = $classes;
 
-            if ($this->configuration->environment === 'development' or !$routeCache->exist()) {
-                $routeScanner = new RouteScanner($this->classes);
+            if ($this->configuration->isDevelopment() or !$routeCache->exist()) {
+                $routeScanner = new RouteScanner($classes);
                 $routes = $routeScanner->scan();
                 $routeCache->save($routes);
             }
@@ -1931,22 +2170,21 @@ class App
             $this->addRoutes($routes);
             $this->configureIdentityUser();
 
-            $executionRoute = $this->findRoute($request->uri);
+            $executionRoute = $this->findRoute($request->requestUri);
             $executionRoute or throw new Exception("APP: route for [$request->uri] doesn't exist", 404);
             $request->addRouteParameters($executionRoute->parameters);
 
-            $result = $this->runCallable($this->beforeRunCallback);
+            $result = $this->assembler->assembleCallable($this->beforeRunCallback)->run();
             if ($result == null) {
                 $executionRunner = new ExecutionRouteRunner($executionRoute, $this->di);
                 $result = $executionRunner->run();
             }
-            $this->runCallable($this->afterSuccessfulRunCallback);
+            $this->assembler->assembleCallable($this->afterSuccessfulRunCallback)->run();
 
             if ($result instanceof View) {
                 $response->body = $result->toHtml();
             } else if ($result instanceof Redirect) {
                 $response->location = $result->location;
-                $response->body = $result->body;
             } else if (is_object($result) or is_array($result)) {
                 $response->addHeader("Content-Type", "application/json; charset=utf-8");
                 $response->body = json_encode($result);
@@ -1969,7 +2207,15 @@ class App
         }
         catch (Exception $e)
         {
-            $this->runCallable($this->afterFailedRunCallback);
+            if ($this->afterFailedRunCallback) {
+                try
+                {
+                    //$this->assembler->assembleCallable($this->afterFailedRunCallback)->run();
+                }
+                finally
+                {
+                }
+            }
 
             $code = (!is_int($e->getCode()) or $e->getCode() == 0) ? 500 : $e->getCode();
             if ($code == 401 and $this->configuration->unauthenticatedRedirect) {
@@ -1986,6 +2232,7 @@ class App
             $errorPage = $this->configuration->errorPages ?? array();
             if (array_key_exists($code, $errorPage)) {
                 include_once $this->configuration->errorPages[$code];
+                include_once $this->configuration->errorPages[$code];
             } else {
                 echo $e->getMessage();
                 echo '</br>';
@@ -1999,14 +2246,17 @@ class App
         $this->routes = array_merge($routes, $this->routes);
     }
 
+    /**
+     * @throws UnknownPathAliasException
+     */
     private function configureApp(): void
     {
-        if ($this->lazyConfiguration != null) {
-            $this->runCallable($this->lazyConfiguration);
+        if ($this->addConfigurationCallback != null) {
+            $this->assembler->assembleCallable($this->addConfigurationCallback)->run();
         }
 
         if ($this->configuration->settingsFilePath != null) {
-            $filePath = STORM::aliasPath($this->configuration->settingsFilePath);
+            $filePath = resolve_path_alias($this->configuration->settingsFilePath);
             $className = $this->configuration->settingsClassName;
             $settings = SettingsLoader::load($className, $filePath);
             $this->di->register($settings);
@@ -2014,7 +2264,7 @@ class App
 
         if ($this->configuration->errorPages) {
             foreach ($this->configuration->errorPages as $code => $file) {
-                $this->configuration->errorPages[$code] = STORM::aliasPath($file);
+                $this->configuration->errorPages[$code] = resolve_path_alias($file);
             }
         }
 
@@ -2025,8 +2275,8 @@ class App
 
     private function configureIdentityUser(): void
     {
-        if ($this->lazyIdentityUser != null) {
-            $user = $this->runCallable($this->lazyIdentityUser);
+        if ($this->addIdentityUserCallback != null) {
+            $user = $this->assembler->assembleCallable($this->addIdentityUserCallback)->run();
             $user != null or throw new Exception("AddIdentityUser returned value is null");
             $user instanceof IdentityUser or throw new Exception("AddIdentityUser returned value is not IdentityUser");
 
@@ -2037,16 +2287,9 @@ class App
 
     private function configureI18n(): void
     {
-        if ($this->lazyI18n != null) {
-            $this->runCallable($this->lazyI18n);
+        if ($this->addI18nCallback != null) {
+            $this->assembler->assembleCallable($this->addI18nCallback)->run();
         }
-    }
-
-    private function runCallable(callable $callable): mixed
-    {
-        $reflection = new ReflectionFunction($callable);
-        $args = $this->di->resolveReflectionFunction($reflection);
-        return $reflection->invokeArgs($args);
     }
 
     private function matchSegments(array $routeSegments, array $requestSegments): ?array
@@ -2072,16 +2315,15 @@ class App
             }
         }
 
-        $requestSegments = STORM::explode("/", $requestUri);
+        $requestSegments = none_empty_explode("/", $requestUri);
         foreach ($this->routes as $route => $destination) {
             if (substr_count($route, "/") == substr_count($requestUri, "/")) {
-                $routeSegments = STORM::explode("/", $route);
+                $routeSegments = none_empty_explode("/", $route);
                 $parameters = $this->matchSegments($routeSegments, $requestSegments);
                 if ($parameters) {
                     return new ExecutionRoute($route, $destination, $parameters);
                 }
             }
-
         }
         return null;
     }
@@ -2091,10 +2333,8 @@ readonly class ExecutionRouteRunner
 {
     public function __construct(
         private ExecutionRoute $executionRoute,
-        private Di             $di
-    )
-    {
-    }
+        private Di             $di)
+       { }
 
     public function run(): mixed
     {
@@ -2114,10 +2354,10 @@ readonly class ExecutionRouteRunner
 
             $constructor = $class->getConstructor();
             if ($constructor) {
-                $args = $this->di->resolveReflectionFunction($constructor);
+                $args = $this->di->resolveReflectionMethod($constructor);
             }
             $obj = $class->newInstanceArgs($args);
-            $args = $this->di->resolveReflectionFunction($method);
+            $args = $this->di->resolveReflectionMethod($method);
             return $method->invokeArgs($obj, $args);
         }
 
@@ -2126,8 +2366,8 @@ readonly class ExecutionRouteRunner
 
     private function validateAuthentication(ReflectionClass $class, ReflectionMethod $method, $pattern): void
     {
-        if (count($class->getAttributes(Authenticated::class)) or
-            count($method->getAttributes(Authenticated::class))) {
+        if (count($class->getAttributes(Authenticate::class)) or
+            count($method->getAttributes(Authenticate::class))) {
             $user = $this->di->resolve(IdentityUser::class);
             if (!$user->isAuthenticated()) {
                 throw new Exception("APP: authentication required $pattern", 401);
@@ -2137,8 +2377,8 @@ readonly class ExecutionRouteRunner
 
     private function validateClaims(ReflectionClass $class, ReflectionMethod $method, $pattern): void
     {
-        $classAttributes = $class->getAttributes(Claim::class);
-        $methodAttributes = $method->getAttributes(Claim::class);
+        $classAttributes = $class->getAttributes(Authorize::class);
+        $methodAttributes = $method->getAttributes(Authorize::class);
         $classClaims = $this->getClaimsFromAttribute($classAttributes);
         $methodClaims = $this->getClaimsFromAttribute($methodAttributes);
 
@@ -2203,14 +2443,14 @@ class Getter
 
 class Setter
 {
-    static function set($var, $name, $value)
+    static function set($var, $name, $value): void
     {
         $reflection = new ReflectionObject($var);
         $methodName = 'set' . $name;
         if ($reflection->hasMethod($methodName)) {
             $method = $reflection->getMethod($methodName);
             $method->invoke($var, $value);
-        } else if ($reflection->hasProperty($name)) {
+        } else if ($reflection->hasProperty($name) or $var instanceof stdClass) {
             $var->$name = $value;
         }
     }
@@ -2220,62 +2460,23 @@ class js
 {
     static function i18n(array $phrases, $name): string
     {
-        $jsarray = "<script type=\"text/javascript\">\n";
+        $jsArray = "<script type=\"text/javascript\">\n";
         foreach($phrases as $phrase) {
             $translation = _($phrase);
-            $jsarray .= $name . "['" . $phrase . "']" . " = '$translation';\n";
+            $jsArray .= $name . "['" . $phrase . "']" . " = '$translation';\n";
         }
-        $jsarray .= "</script>\n";
+        $jsArray .= "</script>\n";
 
-        return $jsarray;
+        return $jsArray;
     }
 }
 
 class html
 {
-    static function select($name, $values, $selected = null, $class = null, $required = null, $disabled = null,
-                           $autofocus = null, $onChange = null, $onClick = null)
-    {
-        $html = "";
-        $html .= "<select id=\"$name\" name=\"$name\" ";
-        $html .= self::attr('class', $class);
-        $html .= self::attr('required', $required);
-        $html .= self::attr('disabled', $disabled);
-        $html .= self::attr('autofocus', $autofocus);
-        $html .= self::attr('onChange', $onChange);
-        $html .= self::attr('onClick', $onClick);
-        $html .= ">";
-        $html .= html::options($values, $selected);
-        $html .= "</select>";
-        return $html;
-    }
-
-    static function options($options, $selected = null)
-    {
-        $html = "";
-        foreach ($options as $value => $name) {
-            $attr = '';
-            if ($selected != null && $value == $selected)
-                $attr = "selected";
-            $html .= "<option value=\"$value\" $attr>$name</option>";
-        }
-        return $html;
-    }
-
-    static function error($valid, $message, string $class = "form-error"): string
-    {
-        $html = "";
-        if (!$valid) {
-            $html = "<div class=\"$class\">$message</div>";
-        }
-        return $html;
-    }
-
     static function label(string $for, string $text, string $className = ""): string
     {
         return "<label for=\"$for\" class=\"$className\">$text</label>";
     }
-
     static function text(string $name, string|null $value = "", $class = null, $required = null,
                                 $disabled = null, $autofocus = null, $onChange = null, $onClick = null): string
     {
@@ -2304,12 +2505,49 @@ class html
         return $html;
     }
 
+    static function select($name, $values, $selected = null, $class = null, $required = null, $disabled = null,
+                           $autofocus = null, $onChange = null, $onClick = null): string
+    {
+        $html  = "<select id=\"$name\" name=\"$name\" ";
+        $html .= self::attr('class', $class);
+        $html .= self::attr('required', $required);
+        $html .= self::attr('disabled', $disabled);
+        $html .= self::attr('autofocus', $autofocus);
+        $html .= self::attr('onChange', $onChange);
+        $html .= self::attr('onClick', $onClick);
+        $html .= ">";
+        $html .= html::options($values, $selected);
+        $html .= "</select>";
+        return $html;
+    }
+
+    static function options($options, $selected = null): string
+    {
+        $html = "";
+        foreach ($options as $value => $name) {
+            $attr = '';
+            if ($selected != null && $value == $selected)
+                $attr = "selected";
+            $html .= "<option value=\"$value\" $attr>$name</option>";
+        }
+        return $html;
+    }
+
+    static function error($valid, $message, string $class = "form-error"): string
+    {
+        $html = "";
+        if (!$valid) {
+            $html = "<div class=\"$class\">$message</div>";
+        }
+        return $html;
+    }
+
     private static function attr($attr, $value = null): string
     {
         if (empty($value)) return '';
 
-        if (is_bool($value) && $value) {
-            return "$attr ";
+        if ($value === true) {
+            return $attr . " ";
         }
 
         return "$attr=\"$value\" ";

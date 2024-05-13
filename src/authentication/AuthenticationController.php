@@ -14,7 +14,6 @@ use Response;
 use Route;
 use Redirect;
 
-import ("@/authentication/validators");
 import ('@vendor/hybridauth/src/autoload');
 
 #[Controller]

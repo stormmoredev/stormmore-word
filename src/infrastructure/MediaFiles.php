@@ -9,7 +9,7 @@ readonly class MediaFiles
 {
     public function writeProfilePhoto($photo, $name): void
     {
-        $filePath = STORM::aliasPath("@profile/$name");
+        $filePath = resolve_path_alias("@profile/$name");
 
         $imagick = new Imagick($photo->tmp);
         $imagick->cropThumbnailImage(200, 200);

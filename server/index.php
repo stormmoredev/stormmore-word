@@ -7,7 +7,7 @@ use authentication\StormUser;
 use infrastructure\settings\Settings;
 use infrastructure\Database;
 
-$app = app('../src');
+$app = create_storm_app('../src');
 
 $app->addConfiguration(function(AppConfiguration $configuration, Di $di)
 {
@@ -32,6 +32,7 @@ $app->addConfiguration(function(AppConfiguration $configuration, Di $di)
         '@profile' => "../server/media/profile",
         '@frontend' => "../server/themes/$settings->theme",
     ];
+    $configuration->cacheDir = '../.cache';
     $configuration->viewAddons = "../server/themes/$settings->theme/addons.php";
 });
 
@@ -41,10 +42,10 @@ $app->addI18n(function(Request $request, Settings $settings, I18n $i18n) {
     $i18n->loadLocalFile("@/translations/local/$language->local.json");
 });
 
-$app->addIdentityUser(function(SessionStore $sessionStore,
-                               Request $request,
-                               Settings $settings,
-                               Di $di,
+$app->addIdentityUser(function(SessionStorage       $sessionStore,
+                               Request              $request,
+                               Settings             $settings,
+                               Di                   $di,
                                AuthenticationCookie $authenticationCookie)
 {
     $user = new StormUser();
@@ -79,23 +80,16 @@ $app->addIdentityUser(function(SessionStore $sessionStore,
 
 $app->beforeRun(function(StormUser $user, Request $request, Database $database)
 {
+    $database->begin();
+
     $isAdminUri = str_starts_with($request->uri, "/admin");
     $canEnterAdmin = $user->canEnterPanel();
     if ($isAdminUri and !$canEnterAdmin) {
         return redirect('/signin');
     }
-
-    $database->begin();
 });
-
-$app->onSuccess(function(Database $database) {
-    $database->commit();
-});
-
-$app->onFailure(function (Database $database) {
-    $database->rollback();
-});
-
+$app->onSuccess(function(Database $database) {$database->commit();});
+$app->onFailure(function (Database $database) {$database->rollback();});
 $app->addRoute("/php", function() { phpinfo(); });
 $app->addRoute("/hello/:name", function($request) {
     echo "Hello " . $request->name;

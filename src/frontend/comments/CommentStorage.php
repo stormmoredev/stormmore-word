@@ -5,7 +5,7 @@ namespace frontend\comments;
 use infrastructure\Database;
 use stdClass;
 
-class CommentStore
+class CommentStorage
 {
     public function __construct(
         private Database $database
