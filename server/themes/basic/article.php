@@ -43,7 +43,7 @@
     </div>
     <template id="write-comment-not-authorized">
         <div class="flex justify-center">
-            <a class="font-semibold leading-6 text-sky-600 hover:text-sky-500" href="/signin">
+            <a class="font-semibold leading-6 text-sky-600 hover:text-sky-500" href=" {{ url('/signin') }}">
                 {{ _ Sign in to comment }}
             </a>
         </div>

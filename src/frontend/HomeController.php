@@ -71,19 +71,6 @@ readonly class HomeController
         return $view;
     }
 
-    #[Route('/upload')]
-    public function upload(): View
-    {
-        $directory = resolve_path_alias("@profile/");
-        if ($this->request->isPost()) {
-            $file = $this->request->getFile('file');
-            if ($file?->isUploaded()) {
-                $file->move($directory, ['gen-unique-filename' => true]);
-            }
-        }
-        return view("@frontend/upload");
-    }
-
     #[Route("/:slug")]
     public function article(): View
     {

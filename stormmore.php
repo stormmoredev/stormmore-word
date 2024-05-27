@@ -110,7 +110,7 @@ function none_empty_explode($delimiter, $string, $limit = PHP_INT_MAX): array
     return explode($delimiter, $string, $limit);
 }
 
-function create_storm_app($appDirectory): App
+function create_storm_app(string $appDirectory = ""): App
 {
     return App::getInstance($appDirectory);
 }
@@ -163,6 +163,10 @@ function url($path, $args = array()): string
 {
     if (count($args)) {
         $path = $path . "?" . http_build_query($args);
+    }
+    $pos = strrpos($path, '.');
+    if ($pos !== false and strlen($path) - $pos < 5) {
+        return concatenate_paths(App::getInstance()->request->basePath, $path);
     }
     return concatenate_paths(App::getInstance()->request->baseUri, $path);
 }
@@ -827,6 +831,7 @@ class Request extends ArrayObject
     public string $uri;
     public string $baseUri;
     public string $requestUri;
+    public string $basePath;
     public string $query;
     public ?array $acceptedLanguages = null;
     public array $parameters = [];
@@ -848,7 +853,16 @@ class Request extends ArrayObject
         $this->query = array_key_exists('QUERY_STRING', $_SERVER) ? $_SERVER['QUERY_STRING'] : "";
         $this->uri = $_SERVER['REQUEST_URI'];
         $this->requestUri = array_key_value($_SERVER, 'PATH_INFO', '/');
-        $this->baseUri = $this->parseBaseUri();
+
+        $self = $_SERVER['PHP_SELF'];
+        $self = substr($self, 0, strrpos($self, '.php') + 4);
+        $this->basePath = substr($self, 0, strpos($self, '.php'));
+        $this->basePath = substr($this->basePath, 0, strrpos($this->basePath, '/'));
+        if (str_starts_with($this->uri, $self)) {
+            $this->baseUri = $self;
+        } else {
+            $this->baseUri = $this->basePath;
+        }
 
         $this->getParameters = $_GET;
         $this->postParameters = $_POST;
@@ -868,13 +882,6 @@ class Request extends ArrayObject
 
         unset($_GET);
         unset($_POST);
-    }
-
-    private function parseBaseUri(): string
-    {
-        $self = $_SERVER['PHP_SELF'];
-        $self = substr($self, 0, strpos($self, '.php'));
-        return substr($self, 0, strrpos($self, '/') + 1);
     }
 
     private function parseFiles(): array
@@ -2002,7 +2009,7 @@ readonly class CodeAssembler
 {
     public function __construct(private Di $di) { }
 
-    public function assembleCallable(callable $callable): CallableAssembler
+    public function assembleCallable(?callable $callable): CallableAssembler
     {
         return new CallableAssembler($callable, $this->di);
     }
@@ -2035,11 +2042,14 @@ readonly class ObjectAssembler
 readonly class CallableAssembler
 {
     public function __construct(
-        private closure $closure,
+        private ?closure $closure,
         private Di      $di) { }
 
     public function run(): mixed
     {
+        if ($this->closure == null) {
+            return null;
+        }
         $reflection = new ReflectionFunction($this->closure);
         $args = $this->di->resolveReflectionFunction($reflection);
         return $reflection->invokeArgs($args);
@@ -2054,16 +2064,19 @@ class App
     private ?closure $addI18nCallback = null;
     private ?closure $addIdentityUserCallback = null;
     private ?closure $addConfigurationCallback = null;
-    private ?closure $beforeRunCallback;
-    private ?closure $afterSuccessfulRunCallback;
-    private ?closure $afterFailedRunCallback;
+    private ?closure $beforeRunCallback = null;
+    private ?closure $afterSuccessfulRunCallback = null;
+    private ?closure $afterFailedRunCallback = null;
     public Di $di;
     public AppConfiguration $configuration;
     public ClassLoader $classLoader;
     public Request $request;
 
-    private function __construct($directory)
+    private function __construct(string $directory = null)
     {
+        if ($directory == null) {
+            $directory = getcwd();
+        }
         $this->configuration = new AppConfiguration($directory);
         $this->configuration->directory = $directory;
         $this->classLoader = new ClassLoader($directory);

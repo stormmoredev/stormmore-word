@@ -6,6 +6,7 @@ server/media/**
 settings.**
 settings.development.json
 .cache/**
+
 # misc
 .DS_Store
 *.pem
