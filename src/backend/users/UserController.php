@@ -62,8 +62,7 @@ readonly class UserController
         if ($this->request->isPost() && $form->validate()->isValid()) {
             $this->request->assign($user);
             $this->userService->update($user);
-            $this->response->addFlashMessage('success', "User $user->name updated.");
-            return redirect('/admin/users');
+            return redirect('/admin/users', 'success', "User $user->name updated.");
         }
 
         return view("@backend/users/edit", ['uid' => $uid, 'form' => $form]);
@@ -74,7 +73,7 @@ readonly class UserController
     {
         $uid = $this->request->getParameter('user-id');
         $this->authenticationService->sendConfirmationEmail($uid);
-        $this->response->addFlashMessage('success', _("Confirmation email sent successfully!"));
+        $this->response->setRedirectMessage('success', _("Confirmation email sent successfully!"));
         return redirect(url('/admin/users/edit', ['user-id' => $uid]));
     }
 }

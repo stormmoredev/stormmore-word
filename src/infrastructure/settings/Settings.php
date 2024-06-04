@@ -15,6 +15,7 @@ class Settings
     public string $defaultRole;
     public string $pageSize;
     public string $secretKey;
+    public bool $installed;
 
     public bool $multiLanguage = false;
     public Language $defaultApplicationLanguage;

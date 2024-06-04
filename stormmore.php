@@ -180,9 +180,28 @@ function back(string $url = "/"): Redirect
     return redirect($url);
 }
 
-function redirect(string $url = "/"): Redirect
+function redirect(string $url = "/", string $messageName = "", string $messageContent = null): Redirect
 {
+    if (!empty($messageName)) {
+        RedirectMessage::add($messageName, $messageContent);
+    }
+
     return new Redirect($url);
+}
+
+function isset_redirect_message($name): bool
+{
+    return RedirectMessage::isset($name);
+}
+
+function has_redirect_message($name): bool
+{
+    return RedirectMessage::has($name);
+}
+
+function get_redirect_message(string $name): string
+{
+    return RedirectMessage::get($name);
 }
 
 class Redirect
@@ -650,14 +669,9 @@ class Di
     }
 }
 
-class Flash
+class RedirectMessage
 {
-    private static string $name = 'flash-msg-';
-
-    public static function set(string $name): void
-    {
-        Cookies::set(self::$name . $name, '_');
-    }
+    private static string $name = 'redirect-msg-';
 
     public static function isset($name): bool
     {
@@ -670,12 +684,12 @@ class Flash
         return false;
     }
 
-    public static function add(string $name, string $message): void
+    public static function add(string $name, string $message = ''): void
     {
         Cookies::set(self::$name . $name, $message);
     }
 
-    public static function exist($name): bool
+    public static function has($name): bool
     {
         return Cookies::has(self::$name . $name);
     }
@@ -734,14 +748,9 @@ class Response
         Cookies::set($name, $value);
     }
 
-    public function setFlashFlag(string $name): void
+    public function setRedirectMessage(string $name, string $message = ''): void
     {
-        Flash::set($name);
-    }
-
-    public function addFlashMessage(string $name, string $message): void
-    {
-        Flash::add($name, _($message));
+        RedirectMessage::add($name, _($message));
     }
 
     public function addHeader(string $name, string $value): void

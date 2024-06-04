@@ -79,8 +79,12 @@ $app->addIdentityUser(function(SessionStorage       $sessionStore,
     return $user;
 });
 
-$app->beforeRun(function(StormUser $user, Request $request, Database $database)
+$app->beforeRun(function(StormUser $user, Request $request, Database $database, Settings $settings)
 {
+    if (!$settings->installed) {
+        return redirect('/install.php');
+    }
+
     $database->begin();
 
     $isAdminUri = str_starts_with($request->uri, "/admin");
@@ -92,8 +96,5 @@ $app->beforeRun(function(StormUser $user, Request $request, Database $database)
 $app->onSuccess(function(Database $database) {$database->commit();});
 $app->onFailure(function (Database $database) {$database->rollback();});
 $app->addRoute("/php", function() { phpinfo(); });
-$app->addRoute("/hello/:name", function($request) {
-    echo "Hello " . $request->name;
-});
 
 $app->run();
