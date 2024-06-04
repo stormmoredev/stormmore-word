@@ -27,7 +27,7 @@
 
     @if ($settings->comments->enabled)
     <div class="mt-12">
-        @if (Flash::isset('comment-success'))
+        @if (RedirectMessage::isset('comment-success'))
         <div class="mb-7 flex flex-row w-full px-4 py-4 text-base shadow-md
                  text-gray-800 rounded-lg font-regular bg-gray-900/10">
             <svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-green-800">

@@ -15,11 +15,15 @@ RUN apk add postgresql-dev
 RUN docker-php-ext-install pdo pdo_pgsql
 RUN docker-php-ext-enable pdo pdo_pgsql
 #imagick
-RUN apk add --no-cache ${PHPIZE_DEPS} imagemagick imagemagick-dev libjpeg-turbo
-RUN pecl install -o -f imagick
+RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS imagemagick-dev \
+&& pecl install imagick \
+&& docker-php-ext-enable imagick \
+&& apk del .build-deps
+#RUN apk add --no-cache ${PHPIZE_DEPS} imagemagick imagemagick-dev libjpeg-turbo
+#RUN pecl install -o -f imagick
 #RUN docker-php-ext-install imagick
-RUN docker-php-ext-enable imagick
-RUN apk del --no-cache ${PHPIZE_DEPS}
+#RUN docker-php-ext-enable imagick
+#RUN apk del --no-cache ${PHPIZE_DEPS}
 #intl
 RUN apk add icu-dev
 RUN apk add icu-data-full
