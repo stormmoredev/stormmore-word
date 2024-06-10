@@ -14,7 +14,7 @@ class ArticleFinder
     {
         $query =
             "SELECT a.id, a.title, a.language, published_at, a.created_at, a.updated_at, u.name as author_name
-            FROM articles AS a
+            FROM entries AS a
             LEFT OUTER JOIN public.users u on u.id = author_id";
         return $this->database->fetch($query);
     }

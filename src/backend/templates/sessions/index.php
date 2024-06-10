@@ -24,5 +24,5 @@
         </tbody>
     </table>
 
-    @include @backend/pagination.php
+    {{ pagination('/admin/sessions', $count) }}
 </div>

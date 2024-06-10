@@ -8,22 +8,29 @@ use Override;
 
 class StormUser extends IdentityUser
 {
-    const string READER = "reader";
-    const string ADMINISTRATOR = 'administrator';
+    public static string $READER = "reader";
+    public static string $ADMINISTRATOR = 'administrator';
 
     public string $role = "reader";
 
     public Language $language;
+
+    public ?string $photo = null;
 
     public function canEnterPanel(): bool
     {
         return $this->isAuthenticated() and !empty($this->role) and $this->role != 'reader';
     }
 
+    public function hasPhoto(): bool
+    {
+        return $this->photo != null;
+    }
+
     #[Override]
     public function hasClaims(array $claims): bool
     {
-        if ($this->role == self::ADMINISTRATOR)
+        if ($this->role == self::$ADMINISTRATOR)
         {
             return true;
         }

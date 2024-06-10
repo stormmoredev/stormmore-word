@@ -13,13 +13,13 @@ readonly class ArticleStorage
 
     public function find(int $id): object
     {
-        $query = "SELECT id, title, content, is_published from articles WHERE id = ?";
+        $query = "SELECT id, title, content, is_published from entries WHERE id = ?";
         return $this->database->fetchOne($query, $id);
     }
 
     public function insert(object $article): int
     {
-        $query = "INSERT INTO articles (title, language, content, author_id) 
+        $query = "INSERT INTO entries (title, language, content, author_id) 
                 VALUES(?, ?, ?, ?)";
         $this->database->insert($query,$article->title, $article->language, $article->content, $article->author_id);
         return $this->database->lastInsertedId();
@@ -28,7 +28,7 @@ readonly class ArticleStorage
     public function update(object $article): void
     {
         $query =
-            "UPDATE articles 
+            "UPDATE entries 
             SET title = ?, content = ?, updated_at = ?
             WHERE id = ?";
         $this->database->update($query, $article->title, $article->content, new DateTime(), $article->id);
@@ -38,7 +38,7 @@ readonly class ArticleStorage
     {
         $publishedAt = $isPublished ? new DateTime() : null;
         $query =
-            "UPDATE articles 
+            "UPDATE entries 
             SET is_published = ?, published_at = ? 
             WHERE id = ?";
         $this->database->update($query, $isPublished, $publishedAt, $id);

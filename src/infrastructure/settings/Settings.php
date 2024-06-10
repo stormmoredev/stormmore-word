@@ -31,7 +31,8 @@ class Settings
         public AuthenticationSettings $authentication = new AuthenticationSettings(),
         public CommentsSettings       $comments = new CommentsSettings(),
         public ProfileSettings        $profile = new ProfileSettings(),
-        public UploadSettings         $upload = new UploadSettings()
+        public UploadSettings         $upload = new UploadSettings(),
+        public ForumSettings          $forum = new ForumSettings()
     ) { }
 
     public function setDefaultLanguage($language): void

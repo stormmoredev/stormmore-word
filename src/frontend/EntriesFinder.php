@@ -7,22 +7,20 @@ use infrastructure\Database;
 use infrastructure\settings\Settings;
 use infrastructure\Slug;
 
-readonly class ArticlesFinder
+readonly class EntriesFinder
 {
     public function __construct(
         private Database $database,
         private Slug     $slug,
         private Settings $settings
-    )
-    {
-    }
+    ) { }
 
     public function find($language): array
     {
         $previewMaxChars = $this->settings->editorEntry->maxPreviewChars;
         $query =
             "SELECT a.id, a.title, substring(a.content, 0, $previewMaxChars) as content, a.published_at
-            FROM articles AS a
+            FROM entries AS a
             LEFT OUTER JOIN public.users u on u.id = author_id
             WHERE a.language = ?
             ORDER BY a.published_at DESC";
@@ -47,7 +45,7 @@ readonly class ArticlesFinder
     {
         $query =
             "SELECT a.id, a.title, a.content, a.published_at, u.name as author_name
-            FROM articles AS a
+            FROM entries AS a
             LEFT OUTER JOIN public.users u on u.id = author_id
             WHERE a.id = ?
             ORDER BY a.published_at DESC";

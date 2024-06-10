@@ -1,6 +1,6 @@
 <?php
 
-namespace backend\sessions;
+namespace entries\sessions;
 
 use infrastructure\Database;
 

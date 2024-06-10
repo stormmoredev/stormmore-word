@@ -75,6 +75,7 @@ $app->addIdentityUser(function(SessionStorage       $sessionStore,
     $user->name = $session->name;
     $user->role = $session->role;
     $user->email = $session->email;
+    $user->photo = $session->photo;
 
     return $user;
 });

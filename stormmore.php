@@ -860,7 +860,7 @@ class Request extends ArrayObject
         $this->requestValidator = new RequestValidator($this, $codeAssembler);
 
         $this->query = array_key_exists('QUERY_STRING', $_SERVER) ? $_SERVER['QUERY_STRING'] : "";
-        $this->uri = $_SERVER['REQUEST_URI'];
+        $this->uri = strtok($_SERVER["REQUEST_URI"], '?');
         $this->requestUri = array_key_value($_SERVER, 'PATH_INFO', '/');
 
         $self = $_SERVER['PHP_SELF'];

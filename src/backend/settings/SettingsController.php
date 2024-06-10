@@ -1,6 +1,6 @@
 <?php
 
-namespace backend\settings;
+namespace entries\settings;
 
 use infrastructure\Languages;
 use infrastructure\settings\Settings;
@@ -26,7 +26,7 @@ readonly class SettingsController
     ) { }
 
     #[Route("/admin/settings")]
-    public function index()
+    public function index(): View
     {
         $roles = [];
         foreach ($this->settings->roles as $role) {
@@ -59,7 +59,7 @@ readonly class SettingsController
             $this->settings->comments->enabled = $this->request->getParameter('enabled');
             $this->settingsFile->save($this->settings);
         }
-        return view('@backend/settings/comments', $this->settings);
+        return view('@backend/settings/comments', ['settings' => $this->settings]);
     }
 
     #[Route("/admin/settings/languages")]

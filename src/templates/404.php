@@ -5,11 +5,7 @@
     <link href="themes/basic/public/main.css" rel="stylesheet">
 </head>
 <body>
-<?php if(isset($e)): ?>
-    <h1>Error <?php echo $e->getCode() ?: 500 ?></h1>
-    <h2><?php echo $e->getMessage() ?></h2>
-    <pre><?php echo $e->getTraceAsString() ?></pre>
-    <?php debug_print_backtrace() ?>
-<?php endif ?>
+    <h1>Page not found (404)</h1>
+    <a href="/">Homepage</a>
 </body>
 </html>

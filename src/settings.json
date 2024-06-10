@@ -15,6 +15,10 @@
   "applicationLanguages": ["en","en-US", "pl", "de"],
   "enabledLanguages": ["en", "pl", "de"],
 
+  "forum": {
+    "enabled" : true
+  },
+
   "editorEntry": {
     "maxChars": 3000,
     "maxWords": 1000,

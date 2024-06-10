@@ -3,7 +3,6 @@
 namespace backend;
 
 use authentication\validators\RepeatedPasswordValidator;
-use authentication\validators\UniqueUsernameValidator;
 use authentication\AuthenticationService;
 use Controller, Route, Request, Response, Form, Redirect, View;
 
@@ -22,7 +21,7 @@ readonly class UserController
         private UserStorage $userStore
     ) { }
 
-    function index()
+    function index(): View
     {
         $viewData = [];
         $viewData['users'] = $this->userFinder->find();
@@ -41,7 +40,7 @@ readonly class UserController
             'role' =>       ['required', 'option' => ['reader','editor', 'administrator']],
             'password' =>   ['required'],
             'password2' =>  ['required', RepeatedPasswordValidator::class]];
-        if ($this->request->isPost() && $form->validate()->isValid()) {
+        if ($this->request->isPost() and $form->validate()->isValid()) {
             $user = $this->request->toObject();
             $this->userService->add($user);
             return redirect('/admin/users');
@@ -59,7 +58,7 @@ readonly class UserController
             'first_name' => ['required'],
             'last_name' => ['required'],
             'role' => ['required', 'option' => ['reader' ,'editor', 'administrator']]];
-        if ($this->request->isPost() && $form->validate()->isValid()) {
+        if ($this->request->isPost() and $form->validate()->isValid()) {
             $this->request->assign($user);
             $this->userService->update($user);
             return redirect('/admin/users', 'success', "User $user->name updated.");

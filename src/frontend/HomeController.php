@@ -15,6 +15,7 @@ use Request;
 use I18n;
 use Route;
 use View;
+use Exception;
 
 #[Controller]
 readonly class HomeController
@@ -30,7 +31,7 @@ readonly class HomeController
         private ProfileService $accountService,
         private ProfileStorage $profileStore,
         private I18n           $i18n,
-        private ArticlesFinder $articlesFinder)
+        private EntriesFinder  $articlesFinder)
     {
     }
 
@@ -69,6 +70,15 @@ readonly class HomeController
         $view->maxPhotoSize = $this->settings->upload->maxPhotoSize;
 
         return $view;
+    }
+
+    #[Route("/forum")]
+    public function forum(): View
+    {
+        if (!$this->settings->forum->enabled) {
+            throw new Exception("", 404);
+        }
+        return view('@frontend/forum');
     }
 
     #[Route("/:slug")]

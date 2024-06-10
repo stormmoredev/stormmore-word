@@ -43,12 +43,12 @@ create table sessions
     last_activity_at timestamp with time zone DEFAULT now() not null
 );
 
-create table articles
+create table entries
 (
     id           integer generated always as identity
-        constraint articles_pk primary key,
+        constraint entries_pk primary key,
     author_id    integer                                not null
-        constraint articles_users__fk references users (id),
+        constraint entries_users__fk references users (id),
     title        varchar(256)                           not null,
     content      text                                   not null,
     language     varchar(8)                             not null,
@@ -67,7 +67,7 @@ create table replies
     author_id  integer                                not null
         constraint replies_users__fk references users (id),
     article_id integer                                not null
-        constraint replies_articles__fk references articles (id),
+        constraint replies_entries__fk references entries (id),
     down_vote   int default 0                          not null,
     up_vote     int default 0                          not null,
     content     text                                   not null,
@@ -96,7 +96,7 @@ INSERT INTO users (name, first_name, last_name, role, email, is_activated, passw
 VALUES ('editor', 'Editor', 'Editor', 'editor', 'editor@editor.com', true,
         '1553cc62ff246044c683a61e203e65541990e7fcd4af9443d22b9557ecc9ac54');
 
-INSERT INTO public.articles (author_id, title, content, language, opened, is_deleted, is_published, published_at,
+INSERT INTO public.entries (author_id, title, content, language, opened, is_deleted, is_published, published_at,
                              created_at, updated_at)
 VALUES (77, 'Thank you for checking out Stormmore word.', '<h3>Thank you for checking out Stormmore word.</h3><p>To start editing <a href="/signin">sign in</a> with predefined account (email: admin@admin.com, password: admin) .</p>', 'en', 0, false, false, null, '2024-04-08 08:30:08.582123 +00:00', '2024-04-08 08:50:20.000000 +00:00');
 

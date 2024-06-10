@@ -1,8 +1,8 @@
 <?php
 
-namespace backend\sessions;
-use Controller;
+namespace entries\sessions;
 use infrastructure\settings\Settings;
+use Controller;
 use Request;
 use Route;
 use View;
