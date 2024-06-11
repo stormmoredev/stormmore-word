@@ -90,7 +90,7 @@ readonly class AuthenticationController
             list($sessionKey, $user) = $this->authenticationService->signInByEmail($email, $password, $remember);
             if ($sessionKey and $user) {
                 $this->authenticationCookie->addUser($user, $sessionKey);
-                if ($user->role == StormUser::READER) {
+                if ($user->role == StormUser::$READER) {
                     return redirect("/");
                 }
                 return redirect("/admin");
