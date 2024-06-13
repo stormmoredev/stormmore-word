@@ -41,7 +41,7 @@
         @end
         <div id="write-comment"></div>
     </div>
-    <template id="write-comment-not-authorized">
+    <template id="write-comment-unauthorized">
         <div class="flex justify-center">
             <a class="font-semibold leading-6 text-sky-600 hover:text-sky-500" href=" {{ url('/signin') }}">
                 {{ _ Sign in to comment }}
@@ -76,7 +76,6 @@
             </div>
         </form>
     </template>
-    <script type="text/javascript">toggleCommentPanel();</script>
     @end
 
     @if (count($comments))

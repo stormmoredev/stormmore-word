@@ -2,23 +2,27 @@
 
 namespace entries\forum;
 
+use backend\forum\ThreadFinder;
 use Controller;
 use Route;
+use View;
 
 #[Controller]
-class ForumController
+readonly class ForumController
 {
     public function __construct (
+        private ThreadFinder $threadFinder
     ) { }
 
     #[Route("/admin/forum/threads", "/admin/forum")]
-    public function threads()
+    public function threads(): View
     {
-        return view('@backend/forum/threads');
+        $threads = $this->threadFinder->find();
+        return view('@backend/forum/threads', ['threads' => $threads]);
     }
 
     #[Route("/admin/forum/categories")]
-    public function categories()
+    public function categories(): View
     {
         return view('@backend/forum/categories');
     }

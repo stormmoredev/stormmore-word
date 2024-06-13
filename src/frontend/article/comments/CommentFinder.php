@@ -1,6 +1,6 @@
 <?php
 
-namespace frontend\comments;
+namespace frontend\article\comments;
 
 use infrastructure\Database;
 
@@ -18,7 +18,7 @@ readonly class CommentFinder
             "SELECT r.id, r.content, r.created_at, u.name as author_name, u.photo as author_photo
             FROM replies AS r
             LEFT JOIN users u on u.id = author_id
-            WHERE article_id = ? and is_approved = true and is_deleted = false
+            WHERE entry_id = ? and is_approved = true and is_deleted = false
             ORDER BY r.created_at DESC";
 
         return $this->database->fetch($query, $articleId);

@@ -1,12 +1,12 @@
 const typographyPlugin = require('@tailwindcss/typography')
-
+const forms = require('@tailwindcss/forms')
 const typographyStyles = require('./typography')
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     content: ["./src/backend/templates/**/*.php",
         "./server/themes/**/*.php"],
-    plugins: [typographyPlugin],
+    plugins: [typographyPlugin, forms],
     theme: {
         fontSize: {
             xs: ['0.8125rem', { lineHeight: '1.5rem' }],

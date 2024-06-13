@@ -1,6 +1,6 @@
 <?php
 
-namespace frontend\comments;
+namespace frontend\article\comments;
 
 use infrastructure\settings\Settings;
 use stdClass;

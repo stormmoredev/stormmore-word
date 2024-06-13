@@ -7,15 +7,16 @@ use authentication\StormUser;
 use Controller;
 use frontend\account\ProfileService;
 use frontend\account\ProfileStorage;
-use frontend\comments\CommentFinder;
+use frontend\article\ArticleFinder;
+use frontend\article\comments\CommentFinder;
+use I18n;
 use infrastructure\settings\Settings;
 use infrastructure\Slug;
-use Response, ResponseCache;
 use Request;
-use I18n;
+use Response;
+use ResponseCache;
 use Route;
 use View;
-use Exception;
 
 #[Controller]
 readonly class HomeController
@@ -31,7 +32,7 @@ readonly class HomeController
         private ProfileService $accountService,
         private ProfileStorage $profileStore,
         private I18n           $i18n,
-        private EntriesFinder  $articlesFinder)
+        private ArticleFinder  $articlesFinder)
     {
     }
 
@@ -72,15 +73,6 @@ readonly class HomeController
         return $view;
     }
 
-    #[Route("/forum")]
-    public function forum(): View
-    {
-        if (!$this->settings->forum->enabled) {
-            throw new Exception("", 404);
-        }
-        return view('@frontend/forum');
-    }
-
     #[Route("/:slug")]
     public function article(): View
     {
@@ -88,7 +80,7 @@ readonly class HomeController
         list($id) = $this->slug->getParameters($slug);
 
         $comments = $this->commentFinder->find($id);
-        $article = $this->articlesFinder->findOne($id);
+        $article = $this->articlesFinder->getById($id);
 
         $this->responseCache->cache();
 

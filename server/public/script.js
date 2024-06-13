@@ -23,20 +23,6 @@ function getUser() {
     return JSON.parse(decodedCookie);
 }
 
-function toggleCommentPanel() {
-    const writeCommentEl = document.getElementById('write-comment');
-    if (writeCommentEl != null) {
-        const isAuth = isAuthenticated();
-        let element;
-        if (isAuth) {
-            element = document.getElementById('write-comment-authorized');
-        }
-        if (!isAuth) {
-            element = document.getElementById('write-comment-not-authorized');
-        }
-        writeCommentEl.innerHTML = element.innerHTML;
-    }
-}
 
 function onAboutMeTextChanged(e) {
     return;
@@ -303,8 +289,33 @@ function buildAuthentication() {
     }
 }
 
+class Reply {
+    static initialize(containerName) {
+        const writeCommentEl = document.getElementById(containerName);
+        if (writeCommentEl == null) return;
+
+        let element =  containerName + (isAuthenticated() ? '-authorized' : '-unauthorized');
+        writeCommentEl.innerHTML = document.getElementById(element).innerHTML;
+    }
+}
+
+const forumEntry = {
+    onTitleKeydown: function(e) {
+        if (e.keyCode == 13) {
+            e.preventDefault();
+            document.getElementById('content').focus();
+        }
+    },
+    onContentChange: function(textarea) {
+        textarea.style.height = textarea.scrollHeight + "px";
+    }
+}
+
 window.onload = function() {
     replaceDateTimeDiff();
     replaceDatetime();
     buildAuthentication();
+
+    Reply.initialize('write-reply');
+    Reply.initialize('write-comment');
 };

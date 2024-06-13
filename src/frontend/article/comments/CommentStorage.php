@@ -1,6 +1,6 @@
 <?php
 
-namespace frontend\comments;
+namespace frontend\article\comments;
 
 use infrastructure\Database;
 use stdClass;
@@ -15,7 +15,7 @@ class CommentStorage
 
     public function save(stdClass $comment): int
     {
-        $query = "INSERT INTO replies (author_id, article_id, content, is_approved) VALUES(?, ?, ?, ?)";
+        $query = "INSERT INTO replies (author_id, entry_id, content, is_approved) VALUES(?, ?, ?, ?)";
         $this->database->insert($query,
             $comment->author_id,
             $comment->article_id,

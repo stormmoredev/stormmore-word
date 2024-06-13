@@ -53,9 +53,12 @@ create table entries
     content      text                                   not null,
     language     varchar(8)                             not null,
     opened       int                      DEFAULT 0     not null,
+    type         smallint                 DEFAULT 1     not null,
+    replies      int default 0                          not null,
     is_deleted   bool                     DEFAULT false not null,
     is_published bool                     DEFAULT false not null,
     published_at timestamp with time zone,
+    issued_at    timestamp with time zone DEFAULT now() not null,
     created_at   timestamp with time zone DEFAULT now() not null,
     updated_at   timestamp with time zone DEFAULT now() not null
 );
@@ -66,7 +69,7 @@ create table replies
         constraint replies_pk primary key,
     author_id  integer                                not null
         constraint replies_users__fk references users (id),
-    article_id integer                                not null
+    entry_id integer                                   not null
         constraint replies_entries__fk references entries (id),
     down_vote   int default 0                          not null,
     up_vote     int default 0                          not null,

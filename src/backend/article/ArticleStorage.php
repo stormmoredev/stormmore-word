@@ -19,9 +19,9 @@ readonly class ArticleStorage
 
     public function insert(object $article): int
     {
-        $query = "INSERT INTO entries (title, language, content, author_id) 
-                VALUES(?, ?, ?, ?)";
-        $this->database->insert($query,$article->title, $article->language, $article->content, $article->author_id);
+        $query = "INSERT INTO entries (title, language, content, author_id, type) 
+                VALUES(?, ?, ?, ?, ?)";
+        $this->database->insert($query,$article->title, $article->language, $article->content, $article->author_id, 1);
         return $this->database->lastInsertedId();
     }
 

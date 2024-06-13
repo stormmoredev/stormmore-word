@@ -32,7 +32,7 @@ $app->addConfiguration(function(AppConfiguration $configuration, Di $di)
         '@profile' => "../server/media/profile",
         '@frontend' => "../server/themes/$settings->theme",
     ];
-    $configuration->cacheEnabled = true;
+    $configuration->cacheEnabled = false;
     $configuration->cacheDir = '../.cache';
     $configuration->viewAddons = "../server/themes/$settings->theme/addons.php";
 });

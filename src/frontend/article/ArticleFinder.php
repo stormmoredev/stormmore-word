@@ -1,13 +1,13 @@
 <?php
 
-namespace frontend;
+namespace frontend\article;
 
-use stdClass;
 use infrastructure\Database;
 use infrastructure\settings\Settings;
 use infrastructure\Slug;
+use stdClass;
 
-readonly class EntriesFinder
+readonly class ArticleFinder
 {
     public function __construct(
         private Database $database,
@@ -19,11 +19,11 @@ readonly class EntriesFinder
     {
         $previewMaxChars = $this->settings->editorEntry->maxPreviewChars;
         $query =
-            "SELECT a.id, a.title, substring(a.content, 0, $previewMaxChars) as content, a.published_at
-            FROM entries AS a
+            "SELECT e.id, e.title, substring(e.content, 0, $previewMaxChars) as content, e.published_at
+            FROM entries AS e
             LEFT OUTER JOIN public.users u on u.id = author_id
-            WHERE a.language = ?
-            ORDER BY a.published_at DESC";
+            WHERE e.language = ? and e.type = 1
+            ORDER BY e.published_at DESC";
 
         $articles = $this->database->fetch($query, $language);
 
@@ -41,7 +41,7 @@ readonly class EntriesFinder
         return $articles;
     }
 
-    public function findOne(int $id): stdClass
+    public function getById(int $id): stdClass
     {
         $query =
             "SELECT a.id, a.title, a.content, a.published_at, u.name as author_name

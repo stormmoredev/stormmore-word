@@ -1,13 +1,14 @@
 <?php
 
-namespace frontend\comments;
+namespace frontend\article\comments;
 
 use Authenticate;
 use authentication\StormUser;
 use Controller;
 use Redirect;
 use Request;
-use Response, ResponseCache;
+use Response;
+use ResponseCache;
 use Route;
 
 #[Controller]

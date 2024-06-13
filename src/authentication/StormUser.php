@@ -36,4 +36,9 @@ class StormUser extends IdentityUser
         }
         return parent::hasClaims($claims);
     }
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
 }

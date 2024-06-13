@@ -21,12 +21,26 @@
         <div class="mx-auto w-full max-w-7xl lg:px-8">
             <div class="sm:px-8">
                 <div class="px-4 sm:px-8 lg:px-12">
-                    <div class="mx-auto max-w-2xl lg:max-w-5xl">
+                    <div class="mx-auto max-w-2xl lg:max-w-5xl flex justify-between">
                         <a class="" href="{{ url('/') }}">
                             <img class="absolute top-0 mt-2 h-16 z-10"
                                  src="{{ url('/public/images/storm-cms.png') }}" />
                         </a>
-                        <div class="flex justify-end m-5 text-sm font-semibold leading-6">
+                        <nav class="pointer-events-auto hidden md:block pt-5">
+                            <ul class="flex rounded-full bg-white/90 px-3 text-sm font-medium text-zinc-800 shadow-lg
+                                        shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur dark:bg-zinc-800/90
+                                        dark:text-zinc-200 dark:ring-white/10">
+                                <li>
+                                    <a class="relative block px-3 py-2 transition hover:text-teal-500
+                                                dark:hover:text-teal-400" href="/">{{ _ Blog }}</a>
+                                </li>
+                                <li>
+                                    <a class="relative block px-3 py-2 transition hover:text-teal-500
+                                                dark:hover:text-teal-400" href="{{ url('/f') }}">{{ _ Forum }}</a>
+                                </li>
+                            </ul>
+                        </nav>
+                        <div class="flex justify-end my-5 text-sm font-semibold leading-6">
                             <div id="user-authenticated"></div>
                             @if ($settings->authentication->enabled)
                             <div id="user-anonymous" class="hidden text-sky-600 hover:text-sky-500">

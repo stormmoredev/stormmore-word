@@ -216,8 +216,8 @@ $items = [
     <main class="lg:pl-72">
         <div class="px-4 sm:px-6 lg:px-8">
             <div class="lg:mx-auto pb-10">
-                <div class="flex h-16 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6
-                        sm:px-6 lg:px-0 lg:shadow-none">
+                <div class="flex h-16 items-center gap-x-4 bg-white px-4 sm:gap-x-6
+                        sm:px-6 lg:px-0">
                     <div class="flex flex-1 gap-x-4 self-center lg:gap-x-6">
                         <form class="relative flex flex-1 pt-4" action="#" method="GET">
                             <label for="search-field" class="sr-only">Search</label>
