@@ -228,7 +228,8 @@ class Redirect
 function view($templateFileName, array|object $data = []): View
 {
     $addons = App::getInstance()->configuration->viewAddons;
-    return new View($templateFileName, $data, $addons);
+    $codeAssembler = App::getInstance()->assembler;
+    return new View($templateFileName, $data, $codeAssembler, $addons);
 }
 
 class View
@@ -236,9 +237,10 @@ class View
     private array $bag = [];
 
     public function __construct(
-        private readonly string       $fileName,
-        private readonly array|object $data = [],
-        private readonly ?string      $addonsFilePath = null)
+        private readonly string         $fileName,
+        private readonly array|object   $data,
+        private readonly CodeAssembler  $codeAssembler,
+        private readonly ?string        $addonsFilePath = null)
     { }
 
     public function __get($key)
@@ -272,7 +274,7 @@ class View
             file_exists($templateFilePath) or throw new Exception("VIEW: [$templateFilePath] doesn't exist ");
 
             if (!is_dir($cacheDirectory))  { mkdir($cacheDirectory, 0755, true); }
-            $compiler = new ViewCompiler($templateFilePath);
+            $compiler = new ViewCompiler($templateFilePath, $this->codeAssembler);
             $compiler->compileTo($cachedTemplateFilePath);
         }
 
@@ -302,16 +304,19 @@ class View
 
 interface IViewComponent
 {
-    function print(): void;
+    function print(): View;
 }
 
 class ViewCompiler
 {
+    private CodeAssembler $codeAssembler;
+
     public string $file;
 
 
-    function __construct(string $file)
+    function __construct(string $file, CodeAssembler $codeAssembler)
     {
+        $this->codeAssembler = $codeAssembler;
         $this->file = $file;
     }
 
@@ -345,7 +350,7 @@ class ViewCompiler
         $layoutFilePath = resolve_path_alias($matches[1]);
         file_exists($layoutFilePath) or throw new FileNotFoundException("VIEW: layout [$layoutFilePath] doesn't exist");
 
-        $layoutCompiler = new ViewCompiler($layoutFilePath);
+        $layoutCompiler = new ViewCompiler($layoutFilePath, $this->codeAssembler);
         $layoutContent = $layoutCompiler->compile();
         return preg_replace('/@template/i', $content, $layoutContent);
     }
@@ -403,8 +408,19 @@ class ViewCompiler
             }
             $file = trim($file);
             file_exists($file) or throw new FileNotFoundException("VIEW: @include [$file] doesn't exist");
-            $compiler = new ViewCompiler($file);
+            $compiler = new ViewCompiler($file, $this->codeAssembler);
             return $compiler->compile();
+        }, $content);
+
+        $content = preg_replace_callback('/@component\s*(.*)/i', function ($matches) {
+            $componentName = trim($matches[1]) . 'Component';
+            $fullyQualifiedComponentName = App::getInstance()->classLoader->findFullyQualifiedName($componentName);
+            $component = $this->codeAssembler->assembleObject($fullyQualifiedComponentName)->build();
+            if ($component instanceof IViewComponent) {
+                return $component->print()->toHtml();
+            } else {
+                throw new Exception("VIEW: @component [$componentName] is not a view component");
+            }
         }, $content);
 
         $content = preg_replace('/@foreach\s*\((.*)\)/i', '<?php foreach($1) { ?>', $content);
@@ -2170,7 +2186,6 @@ readonly class CallableAssembler
 class App
 {
     private static ?App $instance = null;
-    private CodeAssembler $assembler;
     private array $routes = [];
     private ?closure $addI18nCallback = null;
     private ?closure $addIdentityUserCallback = null;
@@ -2181,6 +2196,7 @@ class App
     public Di $di;
     public AppConfiguration $configuration;
     public ClassLoader $classLoader;
+    public CodeAssembler $assembler;
     public Request $request;
 
     private function __construct(string $directory = null)

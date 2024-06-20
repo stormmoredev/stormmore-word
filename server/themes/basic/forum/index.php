@@ -1,5 +1,7 @@
 @layout @frontend/layout.php
 
+@component ForumCategory
+
 <div class="mx-auto flex justify-end">
     <a href="{{ url('/f/add-thread') }}" class="block rounded-md bg-sky-600 px-3 py-2
         text-center text-sm font-semibold text-white shadow-sm hover:bg-sky-500 focus-visible:outline
