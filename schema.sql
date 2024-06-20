@@ -35,12 +35,26 @@ create table sessions
 (
     id               UUID                     DEFAULT gen_random_uuid() primary key,
     user_id          integer                                not null
-        constraint sessions_users__fk
-            references users (id),
+        constraint sessions_users__fk references users (id),
     remember         bool                     DEFAULT false not null,
     valid_to         timestamp with time zone               not null,
     created_at       timestamp with time zone DEFAULT now() not null,
     last_activity_at timestamp with time zone DEFAULT now() not null
+);
+
+create table categories
+(
+    id  integer generated always as identity constraint categories_pk primary key,
+    parent_id integer                               null
+        constraint categories_categories__fk references categories (id),
+    name varchar(256)                               not null,
+    slug varchar(256)                               not null UNIQUE,
+    description varchar(1024)                       null,
+    sequence    smallint                 DEFAULT 1     not null,
+    type        smallint                 DEFAULT 1     not null,
+    is_deleted bool                      DEFAULT false not null,
+    created_at timestamp with time zone  DEFAULT now() not null,
+    updated_at timestamp with time zone  DEFAULT now() not null
 );
 
 create table entries
@@ -49,6 +63,8 @@ create table entries
         constraint entries_pk primary key,
     author_id    integer                                not null
         constraint entries_users__fk references users (id),
+    category_id  integer                                null
+        constraint entries_categories__fk references categories (id),
     title        varchar(256)                           not null,
     content      text                                   not null,
     language     varchar(8)                             not null,
@@ -65,11 +81,10 @@ create table entries
 
 create table replies
 (
-    id         integer generated always as identity
-        constraint replies_pk primary key,
-    author_id  integer                                not null
+    id          integer generated always as identity constraint replies_pk primary key,
+    author_id   integer                                not null
         constraint replies_users__fk references users (id),
-    entry_id integer                                   not null
+    entry_id    integer                                not null
         constraint replies_entries__fk references entries (id),
     down_vote   int default 0                          not null,
     up_vote     int default 0                          not null,

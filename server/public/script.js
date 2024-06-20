@@ -311,11 +311,11 @@ const forumEntry = {
     }
 }
 
-window.onload = function() {
+window.addEventListener('load', function() {
     replaceDateTimeDiff();
     replaceDatetime();
     buildAuthentication();
 
     Reply.initialize('write-reply');
     Reply.initialize('write-comment');
-};
+});

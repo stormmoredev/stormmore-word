@@ -2,10 +2,10 @@
 
 require("../stormmore.php");
 
-use authentication\AuthenticationCookie;
-use authentication\StormUser;
-use infrastructure\settings\Settings;
+use app\authentication\AuthenticationCookie;
+use app\authentication\StormUser;
 use infrastructure\Database;
+use infrastructure\settings\Settings;
 
 $app = create_storm_app('../src');
 
@@ -26,8 +26,8 @@ $app->addConfiguration(function(AppConfiguration $configuration, Di $di)
         404 => '@/templates/404.php'];
     $configuration->aliases = [
         '@vendor' => '../vendor',
-        '@backend' => "backend/templates",
-        '@backend-layout' => 'backend/templates/layout.php',
+        '@backend' => "app/backend/templates",
+        '@backend-layout' => 'app/backend/templates/layout.php',
         '@media' => "../server/media",
         '@profile' => "../server/media/profile",
         '@frontend' => "../server/themes/$settings->theme",

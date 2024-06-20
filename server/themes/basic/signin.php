@@ -74,7 +74,7 @@
             </div>
         </div>
         @end
-        <form action="/signin" method="POST" class="form">
+        <form action="{{ url('/signin', ['redirect' => $redirect]) }}" method="POST" class="form">
             <div class="row">
                 <label for="email">{{ _ Email }}</label>
                 <input id="email" name="email" type="text"  required>

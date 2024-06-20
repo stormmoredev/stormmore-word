@@ -2,8 +2,8 @@
 
 namespace infrastructure;
 
+use app\authentication\StormUser;
 use infrastructure\settings\Settings;
-use authentication\StormUser;
 
 readonly class MailNotifications
 {

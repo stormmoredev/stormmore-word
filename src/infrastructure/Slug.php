@@ -8,7 +8,7 @@ class Slug
 {
     public function article($id, $title): string
     {
-        $slug = $this->slugify($title);
+        $slug = self::slugify($title);
         return $id . '-' . $slug;
     }
 
@@ -17,7 +17,7 @@ class Slug
         return array_slice(explode('-', $slug), 0);
     }
 
-    private function slugify(string $title): string
+    public static function slugify(string $title): string
     {
         $rules = ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove; :: Lower(); :: NFC;';
         $transliterate = Transliterator::createFromRules($rules, Transliterator::FORWARD);

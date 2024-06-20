@@ -4,7 +4,7 @@ const typographyStyles = require('./typography')
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-    content: ["./src/backend/templates/**/*.php",
+    content: ["./src/app/backend/templates/**/*.php",
         "./server/themes/**/*.php"],
     plugins: [typographyPlugin, forms],
     theme: {

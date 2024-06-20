@@ -60,7 +60,12 @@ readonly class Database
         $stmt->execute($args);
     }
 
-    public function fetch( string $statement, ...$args): array
+    public function fetch(string $statement, ...$args): array
+    {
+        return $this->query($statement, null, $args);
+    }
+
+    public function fetchArgs(string $statement, array $args): array
     {
         return $this->query($statement, null, $args);
     }

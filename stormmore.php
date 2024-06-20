@@ -162,7 +162,9 @@ function import(string $file): void
 function url($path, $args = array()): string
 {
     if (count($args)) {
-        $path = $path . "?" . http_build_query($args);
+        $query = http_build_query($args);
+        if (!empty($query))
+            $path = $path . "?" . $query;
     }
     $pos = strrpos($path, '.');
     if ($pos !== false and strlen($path) - $pos < 5) {
@@ -219,6 +221,9 @@ class Redirect
         }
     }
 }
+
+
+
 
 function view($templateFileName, array|object $data = []): View
 {
@@ -293,6 +298,11 @@ class View
         require_once $cachedTemplateFilePath;
         return ob_get_clean();
     }
+}
+
+interface IViewComponent
+{
+    function print(): void;
 }
 
 class ViewCompiler
@@ -937,6 +947,30 @@ class Request extends ArrayObject
         return $parameters;
     }
 
+    public function getReferer(): ?string
+    {
+        $referer = null;
+        if (array_key_exists('HTTP_REFERER', $_SERVER))
+        {
+            $referer = $_SERVER['HTTP_REFERER'];
+        }
+        return $referer;
+    }
+
+    public function encodeRequestUri(): string
+    {
+        return urlencode($_SERVER["REQUEST_URI"]);
+    }
+
+    public function decodeParameter(string $name): ?string
+    {
+        $parameter = $this->getParameter($name);
+        if ($parameter) {
+            $parameter = urldecode($parameter);
+        }
+        return $parameter;
+    }
+
     public function addRouteParameters(array $parameters): void
     {
         $this->routeParameters = $parameters;
@@ -969,10 +1003,37 @@ class Request extends ArrayObject
         return array_key_exists($name, $this->parameters);
     }
 
+    public function hasGetParameter(string $name): bool
+    {
+        return array_key_exists($name, $this->getParameters);
+    }
+
     public function getParameter(string $name, $defaultValue = null): mixed
     {
         if ($this->hasParameter($name)) {
             return $this->parameters[$name];
+        }
+
+        return $defaultValue;
+    }
+
+    public function get(...$names): mixed
+    {
+        if (count($names) == 1) {
+            return $this->getParameter($names[0]);
+        }
+
+        $parameters = array();
+        foreach($names as $name) {
+            $parameters[] = $this->getParameter($name);
+        }
+        return $parameters;
+    }
+
+    public function getInt(string $name, ?int $defaultValue = null): ?int
+    {
+        if ($this->hasParameter($name) and is_int($this->getParameter($name))) {
+            return intval($this->parameters[$name]);
         }
 
         return $defaultValue;
@@ -1115,6 +1176,15 @@ class Form
         $this->model = $model;
     }
 
+    function removeRule(string $field, string $name): void
+    {
+        if (array_key_exists($field, $this->rules) and array_key_exists($name, $this->rules[$field])) {
+            unset($this->rules[$field][$name]);
+        }
+        if (array_key_exists($field, $this->rules) and ($key = array_search($name, $this->rules[$field])) !== false) {
+            unset($this->rules[$field][$key]);
+        }
+    }
 
     function label(string $for, string $text, string $className = ""): string
     {
@@ -1166,6 +1236,16 @@ class Form
     function isValid(): bool
     {
         return $this->validationResult?->isValid();
+    }
+
+    function isInvalid(): bool
+    {
+        return $this->validationResult != null and !$this->validationResult->isValid();
+    }
+
+    function isSubmittedSuccessfully(): bool
+    {
+        return $this->request->isPost() and $this->validate()->isValid();
     }
 
     public function getValue($name, $empty = null): mixed
@@ -1240,12 +1320,12 @@ class RequestValidator
         {
             $value = $this->request->getParameter($fieldName);
             foreach($subrules as $subruleKey => $subruleValue) {
-                if (is_array($subruleValue)) {
+                if (!is_int($subruleKey)) {
                     $validatorName = $subruleKey;
                     $arguments = $subruleValue;
                 } else {
                     $validatorName = $subruleValue;
-                    $arguments = array();
+                    $arguments = null;
                 }
 
                 $validator = $this->instantiateValidator($validatorName);
@@ -1304,12 +1384,12 @@ class ValidatorResult
 
 interface IValidator
 {
-    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult;
+    function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult;
 }
 
 class UncheckedValidator implements  IValidator
 {
-    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
         if ($value === true) {
             return new ValidatorResult(false, _("Field has to be unchecked"));
@@ -1320,7 +1400,7 @@ class UncheckedValidator implements  IValidator
 
 class CheckedValidator implements  IValidator
 {
-    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
         if ($value !== true) {
             return new ValidatorResult(false, _("Field has to be checked"));
@@ -1331,7 +1411,7 @@ class CheckedValidator implements  IValidator
 
 class OptionValidator implements  IValidator
 {
-    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
         if (!in_array($value, $args)) {
             return new ValidatorResult(false, _("Invalid [$value] option"));
@@ -1342,7 +1422,7 @@ class OptionValidator implements  IValidator
 
 class RequiredValidator implements  IValidator
 {
-    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
         if (empty($value)) {
             return new ValidatorResult(false, _("Field is required"));
@@ -1353,7 +1433,7 @@ class RequiredValidator implements  IValidator
 
 class AlphaValidator implements  IValidator
 {
-    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
         if (!ctype_alpha($value)) {
             return new ValidatorResult(false, _("Allowed only alphabetic characters"));
@@ -1364,7 +1444,7 @@ class AlphaValidator implements  IValidator
 
 class AlphaNumValidator implements  IValidator
 {
-    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
         if (!ctype_alnum($value)) {
             return new ValidatorResult(false, _("Allowed only alpha-numeric characters"));
@@ -1374,7 +1454,7 @@ class AlphaNumValidator implements  IValidator
 }
 class NumberValidator implements  IValidator
 {
-    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
         if (!is_numeric($value)) {
             return new ValidatorResult(false, _("It's not a number"));
@@ -1385,7 +1465,7 @@ class NumberValidator implements  IValidator
 
 class EmailValidator implements  IValidator
 {
-    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
         if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
             return new ValidatorResult(false, _("It's not a valid email address"));
@@ -1396,7 +1476,7 @@ class EmailValidator implements  IValidator
 
 class MinValidator implements  IValidator
 {
-    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
         if (is_numeric($value)) {
             if (count($args) > 0 && $value < $args[0]) {
@@ -1413,7 +1493,7 @@ class MinValidator implements  IValidator
 
 class MaxValidator implements  IValidator
 {
-    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
         if (is_string($value)) {
             if (count($args) > 0 && mb_strlen($value) > $args[0]) {
@@ -1429,9 +1509,31 @@ class MaxValidator implements  IValidator
     }
 }
 
+class MaxlenValidator implements IValidator
+{
+    function validate(mixed $value, string $name, array $data, mixed $max): ValidatorResult
+    {
+        if (is_int($max) > 0 && mb_strlen($value) > $max) {
+            return new ValidatorResult(false, _("Length shouldn't be greater then %s", $max));
+        }
+        return new ValidatorResult();
+    }
+}
+
+class IntValidator implements IValidator
+{
+    function validate(mixed $value, string $name, array $data, mixed $arg): ValidatorResult
+    {
+        if (!is_int($value)) {
+            return new ValidatorResult(false, _("It is not integer"));
+        }
+        return new ValidatorResult();
+    }
+}
+
 class RangeValidator implements  IValidator
 {
-    function validate(mixed $value, string $name, array $data, array $args): ValidatorResult
+    function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
         if (is_numeric($value)) {
             if (count($args) > 0 && $value < $args[0]) {
@@ -2241,7 +2343,9 @@ class App
 
             $code = (!is_int($e->getCode()) or $e->getCode() == 0) ? 500 : $e->getCode();
             if ($code == 401 and $this->configuration->unauthenticatedRedirect) {
-                header("Location: {$this->configuration->unauthenticatedRedirect}");
+                $redirect =  $this->request->encodeRequestUri();
+                $location = $this->configuration->unauthenticatedRedirect . '?redirect=' .  $redirect;
+                header("Location: $location");
                 die;
             }
             if ($code == 403 and $this->configuration->unauthorizedRedirect) {
@@ -2550,7 +2654,9 @@ class html
             $attr = '';
             if ($selected != null && $value == $selected)
                 $attr = "selected";
-            $html .= "<option value=\"$value\" $attr>$name</option>";
+            $html .= "<option ";
+            $html .= "value=\"$value\" ";
+            $html .= "$attr>$name</option>";
         }
         return $html;
     }
