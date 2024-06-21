@@ -3,7 +3,7 @@
 namespace app\backend\settings;
 
 use Controller;
-use infrastructure\Cache;
+use infrastructure\FileSystem\Cache;
 use infrastructure\Languages;
 use infrastructure\MailNotifications;
 use infrastructure\settings\Settings;
@@ -36,7 +36,6 @@ readonly class SettingsController
         {
             $this->settings->name = $this->request->name;
             $this->settings->pageSize = $this->request->pageSize;
-
             $this->settingsFile->save($this->settings);
         }
 
@@ -48,8 +47,9 @@ readonly class SettingsController
     #[Route("/admin/settings/mail")]
     public function mail(): View
     {
-        $data = ['settings' => $this->settings];
-        return view('@backend/settings/mail', $data);
+        return view('@backend/settings/mail', [
+            'settings' => $this->settings
+        ]);
     }
 
     #[Route("/admin/settings/comments")]
@@ -59,7 +59,9 @@ readonly class SettingsController
             $this->settings->comments->enabled = $this->request->getParameter('enabled');
             $this->settingsFile->save($this->settings);
         }
-        return view('@backend/settings/comments', ['settings' => $this->settings]);
+        return view('@backend/settings/comments', [
+            'settings' => $this->settings
+        ]);
     }
 
     #[Route("/admin/settings/languages")]
@@ -78,21 +80,21 @@ readonly class SettingsController
             $this->settingsFile->save($this->settings);
         }
 
-        $data = [
+        return view('@backend/settings/languages', [
             'multiLanguage' => $this->settings->multiLanguage,
             'default' => $this->settings->defaultLanguage,
             'list' => $list,
             'enabledCodes' => $enabledCodes,
-            'enabled' => $this->languages->getList($enabledCodes)];
-
-        return view('@backend/settings/languages', $data);
+            'enabled' => $this->languages->getList($enabledCodes)
+        ]);
     }
 
     #[Route("/admin/settings/authentication")]
     public function authentication(): View
     {
-        $data = ['settings' => $this->settings];
-        return view('@backend/settings/authentication', $data);
+        return view('@backend/settings/authentication', [
+            'settings' => $this->settings
+        ]);
     }
 
     #[Route("/admin/settings/cache")]
@@ -101,14 +103,19 @@ readonly class SettingsController
         if ($this->request->isPost()) {
             $this->cache->removeAll();
         }
-        return view('@backend/settings/cache');
+
+        $info = $this->cache->getCacheFilesInformation();
+        return view('@backend/settings/cache', [
+            'info' => $info,
+        ]);
     }
 
     #[Route("/admin/settings/mail/smtp-test")]
     public function mailTest(): View
     {
         $this->mailNotifications->SmtpTest();
-        $data = ['settings' => $this->settings];
-        return view('@backend/settings/mail', $data);
+        return view('@backend/settings/mail', [
+            'settings' => $this->settings
+        ]);
     }
 }

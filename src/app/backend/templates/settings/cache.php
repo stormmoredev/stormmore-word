@@ -9,6 +9,14 @@
     <main class="flex-1">
         <div class="sm:mx-auto sm:w-full sm:max-w-sm">
             <form method="post" class="form">
+                <div>{{ _ cached_view_files }} </div>
+                <div>{{ _ cached_file_number }} {{ $info->viewFilesNum }}</div>
+                <div>{{ _ cached_file_size }} {{ $info->viewFilesSize }}MB</div>
+
+                <div>{{ _ cached_response_files }} </div>
+                <div>{{ _ cached_file_number }} {{ $info->responseFilesNum }}</div>
+                <div>{{ _ cached_file_size }} {{ $info->responseFilesSize }}MB</div>
+
                 <button type="submit" class="btn w-full mt-7">{{ _ Remove all }}</button>
             </form>
         </div>

@@ -64,13 +64,13 @@ readonly class HomeController
 
         $profile = $this->profileStore->loadProfile($this->user->id);
 
-        $view = view('@frontend/profile');
-        $view->profileUpdated = $profilePhotoUpdated;
-        $view->profile = $profile;
-        $view->maxFileSize = $this->settings->upload->maxFileSize;
-        $view->maxPhotoSize = $this->settings->upload->maxPhotoSize;
-
-        return $view;
+        return view('@frontend/profile',[
+            'profileUpdated' => $profilePhotoUpdated,
+            'profile' => $profile,
+            'settings' => $this->settings,
+            'maxFileSize' => $this->settings->upload->maxFileSize,
+            'maxPhotoSize' => $this->settings->upload->maxPhotoSize,
+        ]);
     }
 
     #[Route("/:slug")]
@@ -84,13 +84,12 @@ readonly class HomeController
 
         $this->responseCache->cache();
 
-        $view = view('@frontend/blog/article');
-        $view->slug = $slug;
-        $view->article = $article;
-        $view->comments = $comments;
-        $view->settings = $this->settings;
-        $view->js_format = $this->i18n->culture->dateTimeFormat;
-
-        return $view;
+        return view('@frontend/blog/article', [
+            'slug' => $slug,
+            'article' => $article,
+            'comments' => $comments,
+            'settings' => $this->settings,
+            'js_format' => $this->i18n->culture->dateTimeFormat
+        ]);
     }
 }

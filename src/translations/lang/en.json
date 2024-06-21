@@ -1,6 +1,11 @@
 {
   "Sign in": "Sign in",
 
+  "cached_view_files": "Cached view files",
+  "cached_response_files": "Cached response files",
+  "cached_file_size": "Size",
+  "cached_file_number": "Number",
+
   "date_interval_y_singular": "year ago",
   "date_interval_y_plural": "%s years ago",
   "date_interval_m_singular": "month ago",
