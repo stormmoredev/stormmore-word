@@ -2,8 +2,6 @@
 
 use app\shared\category\CategoryRepository;
 use infrastructure\Slug;
-use IValidator;
-use ValidatorResult;
 
 readonly class CategorySlugValidator implements IValidator
 {

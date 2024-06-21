@@ -84,7 +84,7 @@ readonly class HomeController
 
         $this->responseCache->cache();
 
-        $view = view('@frontend/article');
+        $view = view('@frontend/blog/article');
         $view->slug = $slug;
         $view->article = $article;
         $view->comments = $comments;

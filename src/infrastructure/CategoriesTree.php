@@ -2,7 +2,7 @@
 
 namespace infrastructure;
 
-class Categories
+class CategoriesTree
 {
     private array $items;
 
@@ -11,19 +11,9 @@ class Categories
         $this->items = $items;
     }
 
-    public function toFlatTree():array
+    public function toFlat():array
     {
         return $this->buildFlatTree(null, 0);
-    }
-
-    public function toOptionList():array
-    {
-        $list = array();
-        $list[null] = '';
-        foreach($this->toFlatTree() as $item){
-            $list[$item->id] = $item->nameWithNestPrefix;
-        }
-        return $list;
     }
 
     private function buildFlatTree(?int $parentId, int $deep): array

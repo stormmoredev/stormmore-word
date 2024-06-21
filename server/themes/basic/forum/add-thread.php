@@ -1,10 +1,12 @@
+<?php /** @var array $categories */ ?>
+
 @layout @frontend/layout.php
 
 <div class="mx-auto max-w-2xl lg:max-w-5xl">
-    <form action="{{ url('/f/add-thread', ['c' => $cid]) }}" method="post" class="relative">
+    <form action="{{ url('/f/add-thread', ['c' => $category?->id]) }}" method="post" class="relative">
 
         @if ($form->isInvalid())
-            <div>{{ _('Fill all fields') }}</div>
+        <div>{{ _('Fill all fields') }}</div>
         @end
 
         <h2 class="text-base font-semibold leading-7 text-gray-900">Profile</h2>
@@ -30,12 +32,14 @@
             <ul class="hidden absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base
                 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm py-2"
                 id="options" role="listbox">
-                @foreach($categories as $category)
+                <?php foreach($categories as $category):
+                        $paddingLeft = $category->deep * 5
+                ?>
                 <li class="cursor-default pl-3 pr-9 text-gray-900 p-1 hover:bg-sky-600 hover:text-white"
                     data-value="{{ $category->id }}">
-                    <span class="title">{{ $category->name }}</span>
+                    <span class="title" style="padding-left: <?php echo $paddingLeft ?>px">{{ $category->name }}</span>
                 </li>
-                @end
+                <?php endforeach; ?>
             </ul>
         </div>
         @else

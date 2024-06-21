@@ -3,6 +3,7 @@
 namespace app\backend\settings;
 
 use Controller;
+use infrastructure\Cache;
 use infrastructure\Languages;
 use infrastructure\MailNotifications;
 use infrastructure\settings\Settings;
@@ -12,16 +13,15 @@ use Request;
 use Route;
 use View;
 
-import ('@/backend/settings/*');
-
 #[Controller]
 readonly class SettingsController
 {
     public function __construct (
-        private Request $request,
-        private Settings $settings,
-        private SettingsFile $settingsFile,
-        private Languages $languages,
+        private Request         $request,
+        private Settings        $settings,
+        private SettingsFile    $settingsFile,
+        private Languages       $languages,
+        private Cache           $cache,
         private MailNotifications $mailNotifications,
     ) { }
 
@@ -93,6 +93,15 @@ readonly class SettingsController
     {
         $data = ['settings' => $this->settings];
         return view('@backend/settings/authentication', $data);
+    }
+
+    #[Route("/admin/settings/cache")]
+    public function cache(): View
+    {
+        if ($this->request->isPost()) {
+            $this->cache->removeAll();
+        }
+        return view('@backend/settings/cache');
     }
 
     #[Route("/admin/settings/mail/smtp-test")]

@@ -7,8 +7,6 @@ use Request;
 use Route;
 use View;
 
-import ('@/backend/sessions/*');
-
 #[Controller]
 readonly  class SessionController
 {

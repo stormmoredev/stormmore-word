@@ -10,19 +10,20 @@ readonly class ForumFinder
         private Database $database
     ) { }
 
-    public function listThreads(?int $cid = null): array
+    public function listThreads(?string $slug = null): array
     {
         $args = array();
         $query =
-            "SELECT a.id, a.title, replies, issued_at, a.created_at, a.updated_at, u.name as author_name
-            FROM entries AS a
+            "SELECT e.id, e.title, e.replies, e.issued_at, e.created_at, e.updated_at, u.name as author_name
+            FROM entries AS e
             LEFT OUTER JOIN public.users u on u.id = author_id
-            WHERE type = 2";
-        if ($cid !== null) {
-            $args[] = $cid;
-            $query .= " AND a.category_id = ?";
+            LEFT OUTER JOIN categories c on c.id = category_id
+            WHERE e.type = 2 and c.is_deleted = false AND e.is_deleted = false";
+        if ($slug !== null) {
+            $args[] = $slug;
+            $query .= " AND c.slug = ?";
         }
-        $query .=  " ORDER BY issued_at DESC";
+        $query .=  " ORDER BY e.issued_at DESC";
         return $this->database->fetchArgs($query, $args);
     }
 
@@ -38,7 +39,13 @@ readonly class ForumFinder
         return $this->database->fetchOne($query, $id);
     }
 
-    public function getThreadById(int $id): object
+    public function getCategoryBySlug(string $slug): ?object
+    {
+        $query = "SELECT * FROM categories WHERE slug = ? AND type = 2 AND is_deleted = false";
+        return $this->database->fetchOne($query, $slug);
+    }
+
+    public function getThreadById(int $id): ?object
     {
         $query =
             "SELECT a.id, a.title, a.content, a.published_at, u.name as author_name

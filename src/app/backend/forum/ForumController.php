@@ -4,7 +4,7 @@ namespace app\backend\forum;
 
 use Controller;
 use Form;
-use infrastructure\Categories;
+use infrastructure\CategoriesTree;
 use Redirect;
 use Request;
 use Route;
@@ -39,14 +39,14 @@ class ForumController
     #[Route("/admin/forum/categories")]
     public function categories(): View
     {
-        $categories = new Categories($this->forumCategoryFinder->find());
+        $categories = new CategoriesTree($this->forumCategoryFinder->find());
         return view('@backend/forum/categories', ['categories' => $categories]);
     }
 
     #[Route("/admin/forum/categories/add")]
     public function addCategory(): View|Redirect
     {
-        $categories = new Categories($this->forumCategoryFinder->find());
+        $categories = new CategoriesTree($this->forumCategoryFinder->find());
         $form = new Form($this->request);
         $form->rules = $this->categoryValidationRules;
         if ($form->isSubmittedSuccessfully())
@@ -75,7 +75,7 @@ class ForumController
         }
 
         $category = $this->forumCategoryRepository->getById($id);
-        $categories = new Categories($this->forumCategoryFinder->find());
+        $categories = new CategoriesTree($this->forumCategoryFinder->find());
         $viewData = ['categories' => $categories, 'category' => $category, 'form' => $form];
         return view('@backend/forum/category-edit', $viewData);
     }

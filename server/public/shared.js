@@ -11,7 +11,8 @@ window.addEventListener('load', function() {
             const selectedId = valueInput.value;
             const selected = list.querySelector('li[data-value="' + selectedId + '"]');
             if (selected) {
-                nameInput.value = selected.getElementsByClassName('title')[0].innerText;
+                const name = selected.getElementsByClassName('title')[0].innerText;
+                nameInput.value = name.trim();
             } else {
                 nameInput.value = "";
             }

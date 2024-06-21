@@ -4,13 +4,15 @@ namespace app\frontend\forum;
 
 use Authenticate;
 use Controller;
-use frontend\forum\Exception;
+use Form;
+use Exception;
+use infrastructure\CategoriesTree;
+use infrastructure\routing\Routing;
 use infrastructure\settings\Settings;
 use Redirect;
 use Request;
 use Route;
 use View;
-use Form;
 
 #[Controller]
 readonly class ForumController
@@ -19,30 +21,65 @@ readonly class ForumController
         private Request      $request,
         private Settings     $settings,
         private ForumFinder  $forumFinder,
-        private ForumService $forumService)
+        private ForumService $forumService,
+        private Routing      $routing)
     { }
 
-    #[Route("/f")]
+    #[Route("/f", "/f/:route")]
     public function index(): View
     {
-        if (!$this->settings->forum->enabled) {
-            throw new Exception("", 404);
+        $this->settings->forum->enabled or throw new Exception("", 404);
+
+        $slug = null;
+        if ($this->request->has('route')) {
+            $route = $this->request->get('route');
+            $route = $this->routing->parse($route);
+            if ($route->isEntry()) {
+                return $this->thread($route->id);
+            }
+            $slug = $route->slug;
         }
-        $threads = $this->forumFinder->listThreads(null);
-        $categories = $this->forumFinder->listCategories();
-        $data = ['threads' => $threads, 'categories' => $categories];
-        return view('@frontend/forum/index', $data);
+
+        return $this->threads($slug);
     }
 
-    #[Route("/f/c/:cid")]
-    public function category(): View
+    private function threads(?string $slug): View
     {
-        $cid = $this->request->get('cid');
-        $categories = $this->forumFinder->listCategories();
-        $category = $this->forumFinder->getCategoryById($cid);
-        $threads = $this->forumFinder->listThreads($cid);
-        $data = ['category' => $category, 'threads' => $threads, 'categories' => $categories];
-        return view('@frontend/forum/category', $data);
+        $category = null;
+        if ($slug !== null) {
+            $category = $this->forumFinder->getCategoryBySlug($slug);
+            $category !== null or throw new Exception("Forum $slug not found.", 404);
+        }
+        $threads = $this->forumFinder->listThreads($slug);
+        return view('@frontend/forum/index', [
+            'threads' => $threads,
+            'category' => $category,
+            'routing' => $this->routing
+        ]);
+    }
+
+    private function thread($id): View
+    {
+        $thread = $this->forumFinder->getThreadById($id);
+        $thread !== null or throw new Exception("Thread not found.", 404);
+        $thread = $this->forumFinder->getThreadById($id);
+        $replies = $this->forumFinder->listReplies($id);
+        return view('@frontend/forum/thread', [
+            'thread' => $thread,
+            'replies' => $replies
+        ]);
+    }
+
+    private function list(string $slug): View
+    {
+        $category = $this->forumFinder->getCategoryBySlug($slug);
+        $threads = $this->forumFinder->listThreads($slug);
+        return view('@frontend/forum/index', [
+            'threads' => $threads,
+            'category' => $category,
+            'cid' => $category->id,
+            'routing' => $this->routing
+        ]);
     }
 
     #[Authenticate]
@@ -60,28 +97,22 @@ readonly class ForumController
         if ($form->isSubmittedSuccessfully()) {
             list($title, $content) = $this->request->get('title', 'content');
             $id = $this->forumService->addThread($cid, $title, $content);
-            return redirect("/f/thread/$id");
+            return redirect($this->routing->forumThreadByTitleAndId($title, $id));
         }
 
+        $hasUrlCategoryParameter = $this->request->hasGetParameter('c');
         $view = view('@frontend/forum/add-thread');
-        $view->selectCategories = !$this->request->hasGetParameter('c');
+        $view->selectCategories = !$hasUrlCategoryParameter;
         $view->cid = $cid;
         $view->form = $form;
+        $view->category = null;
         if ($view->selectCategories) {
-            $view->categories = $this->forumFinder->listCategories();
+            $tree = new CategoriesTree($this->forumFinder->listCategories());
+            $view->categories = $tree->toFlat();
         } else {
             $view->category = $this->forumFinder->getCategoryById($cid);
         }
         return $view;
-    }
-
-    #[Route('/f/thread/:id')]
-    public function thread(): View
-    {
-        $id = $this->request->getParameter('id');
-        $thread = $this->forumFinder->getThreadById($id);
-        $replies = $this->forumFinder->listReplies($id);
-        return view('@frontend/forum/thread', ['thread' => $thread, 'replies' => $replies]);
     }
 
     #[Route('/f/add-reply')]

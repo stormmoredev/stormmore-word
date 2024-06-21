@@ -228,8 +228,7 @@ class Redirect
 function view($templateFileName, array|object $data = []): View
 {
     $addons = App::getInstance()->configuration->viewAddons;
-    $codeAssembler = App::getInstance()->assembler;
-    return new View($templateFileName, $data, $codeAssembler, $addons);
+    return new View($templateFileName, $data, $addons);
 }
 
 class View
@@ -239,7 +238,6 @@ class View
     public function __construct(
         private readonly string         $fileName,
         private readonly array|object   $data,
-        private readonly CodeAssembler  $codeAssembler,
         private readonly ?string        $addonsFilePath = null)
     { }
 
@@ -304,19 +302,15 @@ class View
 
 interface IViewComponent
 {
-    function print(): View;
+    function view(): View;
 }
 
 class ViewCompiler
 {
-    private CodeAssembler $codeAssembler;
-
     public string $file;
 
-
-    function __construct(string $file, CodeAssembler $codeAssembler)
+    function __construct(string $file)
     {
-        $this->codeAssembler = $codeAssembler;
         $this->file = $file;
     }
 
@@ -350,7 +344,7 @@ class ViewCompiler
         $layoutFilePath = resolve_path_alias($matches[1]);
         file_exists($layoutFilePath) or throw new FileNotFoundException("VIEW: layout [$layoutFilePath] doesn't exist");
 
-        $layoutCompiler = new ViewCompiler($layoutFilePath, $this->codeAssembler);
+        $layoutCompiler = new ViewCompiler($layoutFilePath);
         $layoutContent = $layoutCompiler->compile();
         return preg_replace('/@template/i', $content, $layoutContent);
     }
@@ -408,23 +402,30 @@ class ViewCompiler
             }
             $file = trim($file);
             file_exists($file) or throw new FileNotFoundException("VIEW: @include [$file] doesn't exist");
-            $compiler = new ViewCompiler($file, $this->codeAssembler);
+            $compiler = new ViewCompiler($file);
             return $compiler->compile();
         }, $content);
 
         $content = preg_replace_callback('/@component\s*(.*)/i', function ($matches) {
-            $componentName = trim($matches[1]) . 'Component';
-            $fullyQualifiedComponentName = App::getInstance()->classLoader->findFullyQualifiedName($componentName);
-            $component = $this->codeAssembler->assembleObject($fullyQualifiedComponentName)->build();
-            if ($component instanceof IViewComponent) {
-                return $component->print()->toHtml();
-            } else {
-                throw new Exception("VIEW: @component [$componentName] is not a view component");
-            }
+            $componentName = trim($matches[1]);
+            return "<?php print_view_component('$componentName') ?>";
         }, $content);
 
         $content = preg_replace('/@foreach\s*\((.*)\)/i', '<?php foreach($1) { ?>', $content);
         return preg_replace('/@end/i', '<?php } ?>', $content);
+    }
+}
+
+function print_view_component(string $name): void
+{
+    $componentName = $name . 'Component';
+    $fullyQualifiedComponentName = App::getInstance()->classLoader->findFullyQualifiedName($componentName);
+    $codeAssembler = App::getInstance()->assembler;
+    $component = $codeAssembler->assembleObject($fullyQualifiedComponentName)->build();
+    if ($component instanceof IViewComponent) {
+        echo $component->view()->toHtml();
+    } else {
+        throw new Exception("VIEW: @component [$componentName] is not a view component");
     }
 }
 
@@ -865,6 +866,9 @@ class Request extends ArrayObject
 
     public string $uri;
     public string $baseUri;
+    /**
+     * in case of /path/to/script/index.php/my-module returns /my-module
+     */
     public string $requestUri;
     public string $basePath;
     public string $query;
@@ -1012,6 +1016,11 @@ class Request extends ArrayObject
     public function isPut(): bool
     {
         return $this->method == 'PUT';
+    }
+
+    public function has(string $name): bool
+    {
+        return array_key_exists($name, $this->parameters);
     }
 
     public function hasParameter(string $name): bool
@@ -2626,6 +2635,17 @@ class html
         $html .= self::attr('class', $class);
         $html .= self::attr('disabled', $disabled);
         $html .= "/>";
+        return $html;
+    }
+
+    static function link(string $name, string $href, array $attributes = []): string
+    {
+        $attributes['href'] = $href;
+        $html = "<a ";
+        foreach($attributes as $key => $value) {
+            $html .=  "$key=\"$value\" ";
+        }
+        $html .= ">$name</a>";
         return $html;
     }
 

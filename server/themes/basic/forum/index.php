@@ -1,30 +1,37 @@
+<?php
+/** @var \infrastructure\routing\Routing $routing */
+/** @var object $thread */
+?>
 @layout @frontend/layout.php
 
-@component ForumCategory
-
-<div class="mx-auto flex justify-end">
-    <a href="{{ url('/f/add-thread') }}" class="block rounded-md bg-sky-600 px-3 py-2
+<div class="mx-auto flex justify-between">
+    <div>
+        <div class="h-14">
+            @if($category)
+            <div>{{ $category->name }}</div>
+            <div>{{ $category->description }}</div>
+            @else
+            <div>{{ _ All }}</div>
+            <div>{{ _ Threads in alphabetic order }}</div>
+            @end
+        </div>
+    </div>
+    <a href="{{ url('/f/add-thread', ['c' => $category?->id]) }}" class="block rounded-md bg-sky-600 px-3 py-2
         text-center text-sm font-semibold text-white shadow-sm hover:bg-sky-500 focus-visible:outline
-        focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600">
+        focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 self-center">
         {{ _ Add thread }}
     </a>
 </div>
 <div class="mt-8 flex">
-    <div class="w-72">
-        <div class="pb-2 pt-4">
-            <div class="space-y-2 flex flex-col">
-                @foreach($categories as $category)
-                <a href="{{ url("/f/c/$category->id") }}" class="text-sm text-gray-500">{{ $category->name }}</a>
-                @end
-            </div>
-        </div>
-    </div>
+    @component ForumCategory
     <ul role="list" class="divide-y divide-gray-100 flex-1">
         @foreach($threads as $thread)
         <li class="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 py-5 sm:flex-nowrap">
             <div>
                 <p class="text-sm font-semibold leading-6 text-gray-900">
-                    <a href="{{ url ('/f/thread/' . $thread->id) }}" class="hover:underline">{{ $thread->title }}</a>
+                    <a href="<?php echo $routing->forumThread($thread) ?>" class="hover:underline">
+                        <?php echo $thread->title ?>
+                    </a>
                 </p>
                 <div class="mt-1 flex items-center gap-x-2 text-xs leading-5 text-gray-500">
                     <p>

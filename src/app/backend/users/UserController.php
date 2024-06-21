@@ -12,8 +12,6 @@ use Response;
 use Route;
 use View;
 
-import('@/backend/users/*');
-
 #[Controller]
 #[Route("/admin/users")]
 readonly class UserController

@@ -5,4 +5,5 @@
     <a href="/admin/settings/authentication">{{ _ Authentication }}</a>
     <a href="#">{{ _ Theme }}</a>
     <a href="/admin/settings/mail">{{ _ Mail }}</a>
+    <a href="/admin/settings/cache">{{ _ Cache }}</a>
 </aside>

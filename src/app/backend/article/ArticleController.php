@@ -8,8 +8,6 @@ use ResponseCache;
 use Route;
 use View;
 
-import('@/backend/articles/*');
-
 #[Controller]
 #[Route("/admin/articles")]
 readonly class ArticleController
