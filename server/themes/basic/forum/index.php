@@ -56,7 +56,7 @@
                                 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
                         </svg>
                     </dt>
-                    <dd class="text-sm leading-6 text-gray-900">{{ $thread->replies }}</dd>
+                    <dd class="text-sm leading-6 text-gray-900">{{ $thread->replies_num }}</dd>
                 </div>
             </dl>
         </li>

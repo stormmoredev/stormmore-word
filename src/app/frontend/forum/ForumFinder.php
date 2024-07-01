@@ -14,7 +14,7 @@ readonly class ForumFinder
     {
         $args = array();
         $query =
-            "SELECT e.id, e.title, e.slug, e.replies, e.last_activity_at, e.created_at, e.updated_at, u.name as author_name
+            "SELECT e.id, e.title, e.slug, e.replies_num, e.last_activity_at, e.created_at, e.updated_at, u.name as author_name
             FROM entries AS e
             LEFT OUTER JOIN public.users u on u.id = author_id
             LEFT OUTER JOIN categories c on c.id = category_id
