@@ -31,11 +31,11 @@ $app->addConfiguration(function(AppConfiguration $configuration, Di $di)
         '@media' => "../server/media",
         '@profile' => "../server/media/profile",
         '@frontend' => "../server/themes/$settings->theme",
-        '@frontend-components' => "../server/themes/$settings->theme/components"
+        '@frontend-components' => "../server/themes/$settings->theme/components",
+
     ];
     $configuration->cacheEnabled = false;
     $configuration->cacheDir = '../.cache';
-    $configuration->viewAddons = "../server/themes/$settings->theme/addons.php";
 });
 
 $app->addI18n(function(Request $request, Settings $settings, I18n $i18n) {
@@ -86,17 +86,15 @@ $app->beforeRun(function(StormUser $user, Request $request, Database $database, 
     if (!$settings->installed) {
         return redirect('/install.php');
     }
-
     $database->begin();
-
     $isAdminUri = str_starts_with($request->uri, "/admin");
     $canEnterAdmin = $user->canEnterPanel();
     if ($isAdminUri and !$canEnterAdmin) {
         return redirect('/signin');
     }
 });
-$app->onSuccess(function(Database $database) {$database->commit();});
-$app->onFailure(function (Database $database) {$database->rollback();});
+$app->onSuccess(function(Database $database) { $database->commit(); });
+$app->onFailure(function (Database $database) { $database->rollback(); });
 $app->addRoute("/php", function() { phpinfo(); });
 
 $app->run();

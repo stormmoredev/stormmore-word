@@ -4,6 +4,18 @@
 
 use Random\Randomizer;
 
+class FileNotFoundException extends Exception { }
+
+class UnknownPathAliasException extends Exception { }
+
+class DiResolveException extends Exception { }
+
+class AjaxAuthenticationException extends Exception { }
+
+class AuthenticationException extends Exception { }
+
+class UnauthorizedException extends Exception { }
+
 /**
  * @throws UnknownPathAliasException if path alias not found
  */
@@ -30,11 +42,6 @@ function resolve_path_alias(string $templatePath): string
     return $templatePath;
 }
 
-class FileNotFoundException extends Exception { }
-class UnknownPathAliasException extends Exception { }
-
-class DiResolveException extends Exception { }
-
 function is_array_key_value_equal(array $array, string $key, mixed $value): bool
 {
     return array_key_exists($key, $array) and $array[$key] == $value;
@@ -59,7 +66,7 @@ function split_file_name_and_ext(string $filename): array
 function concatenate_paths(string ...$paths): string
 {
     $path = '';
-    for($i = 0; $i < count($paths); $i++) {
+    for ($i = 0; $i < count($paths); $i++) {
         $element = $paths[$i];
         if ($i < count($paths) - 1 and !str_ends_with($element, "/")) {
             $element .= "/";
@@ -222,13 +229,15 @@ class Redirect
     }
 }
 
-
-
-
 function view($templateFileName, array|object $data = []): View
 {
-    $addons = App::getInstance()->configuration->viewAddons;
-    return new View($templateFileName, $data, $addons);
+    return new View($templateFileName, $data);
+}
+
+function print_view($templateFileName, array|object $data = []): void
+{
+    $view = view($templateFileName, $data);
+    echo $view->toHtml();
 }
 
 class View
@@ -236,10 +245,10 @@ class View
     private array $bag = [];
 
     public function __construct(
-        private readonly string         $fileName,
-        private readonly array|object   $data,
-        private readonly ?string        $addonsFilePath = null)
-    { }
+        private readonly string       $fileName,
+        private readonly array|object $data)
+    {
+    }
 
     public function __get($key)
     {
@@ -271,7 +280,9 @@ class View
         if ($app->configuration->isDevelopment() || !file_exists($templateFilePath)) {
             file_exists($templateFilePath) or throw new Exception("VIEW: [$templateFilePath] doesn't exist ");
 
-            if (!is_dir($cacheDirectory))  { mkdir($cacheDirectory, 0755, true); }
+            if (!is_dir($cacheDirectory)) {
+                mkdir($cacheDirectory, 0755, true);
+            }
             $compiler = new ViewCompiler($templateFilePath, $this->codeAssembler);
             $compiler->compileTo($cachedTemplateFilePath);
         }
@@ -289,13 +300,7 @@ class View
         extract($this->bag, EXTR_OVERWRITE, 'wddx');
 
         ob_start();
-        if ($this->addonsFilePath) {
-            $addonsFilePath = resolve_path_alias($this->addonsFilePath);
-            $expMessage = "VIEW: helpers [$addonsFilePath] doesn't exist";
-            file_exists($addonsFilePath) or throw new Exception($expMessage);
-            require_once $addonsFilePath;
-        }
-        require_once $cachedTemplateFilePath;
+        require $cachedTemplateFilePath;
         return ob_get_clean();
     }
 }
@@ -359,7 +364,7 @@ class ViewCompiler
                 if (str_contains($phrase, "|")) {
                     $parts = explode("|", $phrase);
                     $phrase = $parts[0];
-                    $args =  none_empty_explode(" ", $parts[1]);
+                    $args = none_empty_explode(" ", $parts[1]);
                     $args = implode(",", $args);
                 }
                 $phrase = '"' . $phrase . '"';
@@ -407,8 +412,17 @@ class ViewCompiler
         }, $content);
 
         $content = preg_replace_callback('/@component\s*(.*)/i', function ($matches) {
-            $componentName = trim($matches[1]);
-            return "<?php print_view_component('$componentName') ?>";
+            $input = trim($matches[1]);
+            $parts = preg_split('/\s+/', $input);
+            $componentName = $parts[0];
+            $args = array_slice($parts, 1);
+            $args = implode($args);
+            return "<?php print_view_component('$componentName', $args) ?>";
+        }, $content);
+
+        $content = preg_replace_callback('/@addons\s*(.*)/i', function ($matches) {
+            $file = trim($matches[1]);
+            return "<?php import(\"$file\") ?>";
         }, $content);
 
         $content = preg_replace('/@foreach\s*\((.*)\)/i', '<?php foreach($1) { ?>', $content);
@@ -416,13 +430,16 @@ class ViewCompiler
     }
 }
 
-function print_view_component(string $name): void
+function print_view_component(string $name, array $args = []): void
 {
     $componentName = $name . 'Component';
     $fullyQualifiedComponentName = App::getInstance()->classLoader->findFullyQualifiedName($componentName);
     $codeAssembler = App::getInstance()->assembler;
     $component = $codeAssembler->assembleObject($fullyQualifiedComponentName)->build();
     if ($component instanceof IViewComponent) {
+        foreach ($args as $name => $value) {
+            Setter::set($component, $name, $value);
+        }
         echo $component->view()->toHtml();
     } else {
         throw new Exception("VIEW: @component [$componentName] is not a view component");
@@ -447,7 +464,7 @@ function format_js_datetime($date): string
             $date = new DateTime($date);
         }
         return $date->format('Y-m-d H:i:s O');
-    } catch(Exception) {
+    } catch (Exception) {
         return "";
     }
 }
@@ -609,15 +626,13 @@ class Di
     public function resolveReflectionMethod(ReflectionMethod $reflection): array
     {
         $args = [];
-        try{
+        try {
             $parameters = $reflection->getParameters();
             foreach ($parameters as $parameter) {
                 $arg = $this->resolveParameter($parameter);
                 $args[] = $arg;
             }
-        }
-        catch(Exception $e)
-        {
+        } catch (Exception $e) {
             $class = $reflection->getDeclaringClass()->getName();
             $method = $reflection->getName();
             $prmName = $parameter->getName();
@@ -796,7 +811,9 @@ class UploadedFile
         public string $tmp,
         public int    $error,
         public int    $size
-    ) { }
+    )
+    {
+    }
 
     public function isImage(): bool
     {
@@ -848,7 +865,7 @@ class UploadedFile
         }
         if (is_array_key_value_equal($options, 'gen-unique-filename', true)) {
             $length = array_key_value($options, 'gen-filename-len', 64);
-            list(,$extension) = split_file_name_and_ext($this->name);
+            list(, $extension) = split_file_name_and_ext($this->name);
             $filename = gen_unique_file_name($length, $extension, $directory);
         }
         if (move_uploaded_file($this->tmp, $directory . "/" . $filename)) {
@@ -970,8 +987,7 @@ class Request extends ArrayObject
     public function getReferer(): ?string
     {
         $referer = null;
-        if (array_key_exists('HTTP_REFERER', $_SERVER))
-        {
+        if (array_key_exists('HTTP_REFERER', $_SERVER)) {
             $referer = $_SERVER['HTTP_REFERER'];
         }
         return $referer;
@@ -1049,7 +1065,7 @@ class Request extends ArrayObject
         }
 
         $parameters = array();
-        foreach($names as $name) {
+        foreach ($names as $name) {
             $parameters[] = $this->getParameter($name);
         }
         return $parameters;
@@ -1158,11 +1174,10 @@ class Request extends ArrayObject
             foreach ($this->parameters as $name => $value) {
                 Setter::set($obj, $name, $value);
             }
-        }
-        else {
+        } else {
             foreach ($map as $mapKey => $mapValue) {
                 $destinationField = $mapValue;
-                if ($mapKey == 0) {
+                if (is_int($mapKey)) {
                     $requestField = $mapValue;
                 } else {
                     $requestField = $mapKey;
@@ -1341,10 +1356,9 @@ class RequestValidator
     function validate($rules): ValidationResult
     {
         $result = new ValidationResult();
-        foreach($rules as $fieldName => $subrules)
-        {
+        foreach ($rules as $fieldName => $subrules) {
             $value = $this->request->getParameter($fieldName);
-            foreach($subrules as $subruleKey => $subruleValue) {
+            foreach ($subrules as $subruleKey => $subruleValue) {
                 if (!is_int($subruleKey)) {
                     $validatorName = $subruleKey;
                     $arguments = $subruleValue;
@@ -1384,7 +1398,7 @@ class RequestValidator
         $normalizedName = '';
         $len = strlen($validatorName);
         $i = 0;
-        while($i < $len) {
+        while ($i < $len) {
             $char = $validatorName[$i];
             if ($char == '-' or $char == '_') {
                 if ($i + 1 < $len) {
@@ -1403,8 +1417,10 @@ class RequestValidator
 class ValidatorResult
 {
     public function __construct(
-        public bool $valid = true,
-        public string $message = "") { }
+        public bool   $valid = true,
+        public string $message = "")
+    {
+    }
 }
 
 interface IValidator
@@ -1412,7 +1428,7 @@ interface IValidator
     function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult;
 }
 
-class UncheckedValidator implements  IValidator
+class UncheckedValidator implements IValidator
 {
     function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
@@ -1423,7 +1439,7 @@ class UncheckedValidator implements  IValidator
     }
 }
 
-class CheckedValidator implements  IValidator
+class CheckedValidator implements IValidator
 {
     function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
@@ -1434,7 +1450,7 @@ class CheckedValidator implements  IValidator
     }
 }
 
-class OptionValidator implements  IValidator
+class OptionValidator implements IValidator
 {
     function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
@@ -1445,7 +1461,7 @@ class OptionValidator implements  IValidator
     }
 }
 
-class RequiredValidator implements  IValidator
+class RequiredValidator implements IValidator
 {
     function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
@@ -1456,7 +1472,7 @@ class RequiredValidator implements  IValidator
     }
 }
 
-class AlphaValidator implements  IValidator
+class AlphaValidator implements IValidator
 {
     function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
@@ -1467,7 +1483,7 @@ class AlphaValidator implements  IValidator
     }
 }
 
-class AlphaNumValidator implements  IValidator
+class AlphaNumValidator implements IValidator
 {
     function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
@@ -1477,7 +1493,8 @@ class AlphaNumValidator implements  IValidator
         return new ValidatorResult();
     }
 }
-class NumberValidator implements  IValidator
+
+class NumberValidator implements IValidator
 {
     function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
@@ -1488,7 +1505,7 @@ class NumberValidator implements  IValidator
     }
 }
 
-class EmailValidator implements  IValidator
+class EmailValidator implements IValidator
 {
     function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
@@ -1499,7 +1516,7 @@ class EmailValidator implements  IValidator
     }
 }
 
-class MinValidator implements  IValidator
+class MinValidator implements IValidator
 {
     function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
@@ -1516,7 +1533,7 @@ class MinValidator implements  IValidator
     }
 }
 
-class MaxValidator implements  IValidator
+class MaxValidator implements IValidator
 {
     function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
@@ -1556,7 +1573,7 @@ class IntValidator implements IValidator
     }
 }
 
-class RangeValidator implements  IValidator
+class RangeValidator implements IValidator
 {
     function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
@@ -1633,7 +1650,27 @@ class Route
 }
 
 #[Attribute]
+class PostMethod
+{
+}
+
+#[Attribute]
+class GetMethod
+{
+}
+
+#[Attribute]
+class Get
+{
+}
+
+#[Attribute]
 class Authenticate
+{
+}
+
+#[Attribute]
+class AjaxAuthenticate
 {
 }
 
@@ -1657,7 +1694,9 @@ class ResponseCache
         private readonly Request          $request,
         private readonly Response         $response,
         private readonly I18n             $i18n
-    ) { }
+    )
+    {
+    }
 
     public function cache(): void
     {
@@ -1733,7 +1772,7 @@ class ResponseCache
         $pattern = $this->cacheDir() . "/" . $pattern;
         $files = glob($pattern);
         foreach ($files as $file) {
-            while(file_exists($file)) {
+            while (file_exists($file)) {
                 if (!unlink($file)) {
                     usleep(2000);
                 }
@@ -2005,7 +2044,6 @@ class AppConfiguration
     public ?string $settingsFilePath = null;
     public array $aliases = array();
     public ?array $errorPages = null;
-    public ?string $viewAddons = null;
     public bool $cacheEnabled = true;
     public ?string $unauthenticatedRedirect = null;
     public ?string $unauthorizedRedirect = null;
@@ -2086,7 +2124,7 @@ class SettingsLoader
                 continue;
             }
             $reflection->hasProperty($name) or
-                throw new Exception("SettingsLoader: settings doesn't have property [$name]");
+            throw new Exception("SettingsLoader: settings doesn't have property [$name]");
 
             $property = $reflection->getProperty($name);
             $type = $property->getType();
@@ -2143,7 +2181,9 @@ class ClassLoader
 
 readonly class CodeAssembler
 {
-    public function __construct(private Di $di) { }
+    public function __construct(private Di $di)
+    {
+    }
 
     public function assembleCallable(?callable $callable): CallableAssembler
     {
@@ -2160,8 +2200,9 @@ readonly class ObjectAssembler
 {
     public function __construct(
         private string $name,
-        private Di $di)
-    { }
+        private Di     $di)
+    {
+    }
 
     public function build(): object
     {
@@ -2179,7 +2220,9 @@ readonly class CallableAssembler
 {
     public function __construct(
         private ?closure $closure,
-        private Di      $di) { }
+        private Di       $di)
+    {
+    }
 
     public function run(): mixed
     {
@@ -2325,7 +2368,7 @@ class App
 
             $result = $this->assembler->assembleCallable($this->beforeRunCallback)->run();
             if ($result == null) {
-                $executionRunner = new ExecutionRouteRunner($executionRoute, $this->di);
+                $executionRunner = new ExecutionRouteRunner($request, $executionRoute, $this->di);
                 $result = $executionRunner->run();
             }
             $this->assembler->assembleCallable($this->afterSuccessfulRunCallback)->run();
@@ -2353,31 +2396,30 @@ class App
             echo $response->body;
 
             $responseCache->write();
-        }
-        catch (Exception $e)
-        {
+        } catch (Exception $e) {
             if ($this->afterFailedRunCallback) {
-                try
-                {
-                    //$this->assembler->assembleCallable($this->afterFailedRunCallback)->run();
-                }
-                finally
-                {
+                try {
+                    $this->assembler->assembleCallable($this->afterFailedRunCallback)->run();
+                } finally {
                 }
             }
 
-            $code = (!is_int($e->getCode()) or $e->getCode() == 0) ? 500 : $e->getCode();
-            if ($code == 401 and $this->configuration->unauthenticatedRedirect) {
-                $redirect =  $this->request->encodeRequestUri();
-                $location = $this->configuration->unauthenticatedRedirect . '?redirect=' .  $redirect;
+            if ($e instanceof AjaxAuthenticationException) {
+                http_response_code(401);
+                die;
+            }
+            if ($e instanceof AuthenticationException and $this->configuration->unauthenticatedRedirect) {
+                $redirect = $this->request->encodeRequestUri();
+                $location = $this->configuration->unauthenticatedRedirect . '?redirect=' . $redirect;
                 header("Location: $location");
                 die;
             }
-            if ($code == 403 and $this->configuration->unauthorizedRedirect) {
+            if ($e instanceof UnauthorizedException and $this->configuration->unauthorizedRedirect) {
                 header("Location: {$this->configuration->unauthorizedRedirect}");
                 die;
             }
 
+            $code = (!is_int($e->getCode()) or $e->getCode() == 0) ? 500 : $e->getCode();
             http_response_code($code);
 
             $errorPage = $this->configuration->errorPages ?? array();
@@ -2483,9 +2525,11 @@ class App
 readonly class ExecutionRouteRunner
 {
     public function __construct(
+        private Request        $request,
         private ExecutionRoute $executionRoute,
         private Di             $di)
-       { }
+    {
+    }
 
     public function run(): mixed
     {
@@ -2500,8 +2544,12 @@ readonly class ExecutionRouteRunner
             $class = new ReflectionClass($endpoint[0]);
             $method = $class->getMethod($endpoint[1]);
 
-            $this->validateAuthentication($class, $method, $this->executionRoute->pattern);
-            $this->validateClaims($class, $method, $this->executionRoute->pattern);
+            $pattern = $this->executionRoute->pattern;
+
+            $this->validateAjaxAuthentication($class, $method, $pattern);
+            $this->validateRequestType($class, $method, $pattern);
+            $this->validateAuthentication($class, $method, $pattern);
+            $this->validateClaims($class, $method, $pattern);
 
             $constructor = $class->getConstructor();
             if ($constructor) {
@@ -2515,13 +2563,47 @@ readonly class ExecutionRouteRunner
         return null;
     }
 
+    /**
+     * @throws AjaxAuthenticationException with code 401 if request is not authenticated
+     */
+    private function validateAjaxAuthentication(ReflectionClass $class, ReflectionMethod $method, $pattern): void
+    {
+        if (count($class->getAttributes(AjaxAuthenticate::class)) or
+            count($method->getAttributes(AjaxAuthenticate::class))) {
+            $user = $this->di->resolve(IdentityUser::class);
+            if (!$user->isAuthenticated()) {
+                throw new AjaxAuthenticationException("APP: authentication required $pattern", 401);
+            }
+        }
+    }
+
+    /**
+     * @throws Exception with code 404 if request method is different then required.
+     */
+    private function validateRequestType(ReflectionClass $class, ReflectionMethod $method, $pattern): void
+    {
+        if (count($class->getAttributes(PostMethod::class)) or
+            count($method->getAttributes(PostMethod::class))) {
+            if (!$this->request->isPost()) {
+                throw new Exception("POST required. $pattern", 404);
+            }
+        }
+
+        if (count($class->getAttributes(GetMethod::class)) or
+            count($method->getAttributes(GetMethod::class))) {
+            if (!$this->request->isGet()) {
+                throw new Exception("GET required. $pattern", 404);
+            }
+        }
+    }
+
     private function validateAuthentication(ReflectionClass $class, ReflectionMethod $method, $pattern): void
     {
         if (count($class->getAttributes(Authenticate::class)) or
             count($method->getAttributes(Authenticate::class))) {
             $user = $this->di->resolve(IdentityUser::class);
             if (!$user->isAuthenticated()) {
-                throw new Exception("APP: authentication required $pattern", 401);
+                throw new AuthenticationException("APP: authentication required $pattern", 401);
             }
         }
     }
@@ -2538,7 +2620,7 @@ readonly class ExecutionRouteRunner
         if ($classAttributes or $methodAttributes) {
             $user = $this->di->resolve(IdentityUser::class);
             if (!$user->hasClaims($requiredClaims)) {
-                throw new Exception("APP: Claim required $pattern", 403);
+                throw new UnauthorizedException("APP: Claim required $pattern", 403);
             }
         }
     }
@@ -2612,7 +2694,7 @@ class js
     static function i18n(array $phrases, $name): string
     {
         $jsArray = "<script type=\"text/javascript\">\n";
-        foreach($phrases as $phrase) {
+        foreach ($phrases as $phrase) {
             $translation = _($phrase);
             $jsArray .= $name . "['" . $phrase . "']" . " = '$translation';\n";
         }
@@ -2628,6 +2710,7 @@ class html
     {
         return "<label for=\"$for\" class=\"$className\">$text</label>";
     }
+
     static function text(string $name, string|null $value = "", $class = null, $required = null,
                                 $disabled = null, $autofocus = null, $onChange = null, $onClick = null): string
     {
@@ -2642,8 +2725,8 @@ class html
     {
         $attributes['href'] = $href;
         $html = "<a ";
-        foreach($attributes as $key => $value) {
-            $html .=  "$key=\"$value\" ";
+        foreach ($attributes as $key => $value) {
+            $html .= "$key=\"$value\" ";
         }
         $html .= ">$name</a>";
         return $html;
@@ -2670,7 +2753,7 @@ class html
     static function select($name, $values, $selected = null, $class = null, $required = null, $disabled = null,
                            $autofocus = null, $onChange = null, $onClick = null): string
     {
-        $html  = "<select id=\"$name\" name=\"$name\" ";
+        $html = "<select id=\"$name\" name=\"$name\" ";
         $html .= self::attr('class', $class);
         $html .= self::attr('required', $required);
         $html .= self::attr('disabled', $disabled);

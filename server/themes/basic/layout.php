@@ -1,3 +1,4 @@
+@addons @frontend/addons
 <html class="h-full antialiased">
 <head>
     <title>Stormmore CommunityWord</title>
@@ -7,18 +8,9 @@
     <link href="{{ url('/public/main.css') }}" rel="stylesheet">
 </head>
 
-<body class="bg-zinc-50 dark:bg-black">
-    <div class="flex flex-col container mx-auto bg-white max-w-7xl px-10" style="min-height: 100%">
-        <header class="flex justify-between">
-            <a class="" href="{{ url('/') }}">
-                <img class="absolute top-0 mt-2 h-16 z-10"  src="{{ url('/public/images/storm-cms.png') }}" />
-            </a>
-                @component ModulePanel
-            <div class="flex justify-end my-5 text-sm font-semibold leading-6">
-                <div id="user-authenticated"></div>
-                @component UserPanel
-            </div>
-        </header>
+<body class="bg-zinc-50 dark:bg-black" style="overflow-y: scroll"">
+    <div class="flex flex-col container mx-auto bg-white max-w-5xl px-10" style="min-height: 100%">
+        @component Header
         <main class="flex-1 mt-12">@template</main>
         <footer class="w-full mt-24">
             <div class="sm:px-8">

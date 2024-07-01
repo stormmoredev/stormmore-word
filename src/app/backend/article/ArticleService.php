@@ -12,7 +12,7 @@ readonly class ArticleService
         private ArticleStorage $articleStore
     ) {}
 
-    function save(object $article)
+    function save(object $article): void
     {
         if ($article->id)
         {

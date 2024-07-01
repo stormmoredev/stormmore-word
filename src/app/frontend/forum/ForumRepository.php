@@ -10,11 +10,11 @@ readonly class ForumRepository
         private Database $database
     ) { }
 
-    public function addThread(int $category_id, string $title, string $content, string $author_id): int
+    public function addThread(int $category_id, string $title, string $slug, string $content, string $author_id): int
     {
-        $query = "INSERT INTO entries (title, language, content, author_id, type, category_id) 
-                    VALUES(?, ?, ?, ?, ?, ?)";
-        return $this->database->insert($query, $title, 'en', $content, $author_id, 2, $category_id);
+        $query = "INSERT INTO entries (title, slug, language, content, author_id, type, category_id) 
+                    VALUES(?, ?, ?, ?, ?, ?, ?)";
+        return $this->database->insert($query, $title, $slug, 'en', $content, $author_id, 2, $category_id);
     }
 
     public function addPost(int $threadId, int $author_id, string $content): int
@@ -29,10 +29,10 @@ readonly class ForumRepository
         return $this->database->lastInsertedId();
     }
 
-    public function incrementRepliesCounterAndRefreshIssueDate(int $threadId): void
+    public function updateRepliesCounterAndLastActivityTime(int $threadId): void
     {
         $query = "UPDATE entries 
-                    SET replies = replies + 1, issued_at = now()
+                    SET replies = replies + 1, last_activity_at = now()
                     WHERE id = ?";
         $this->database->update($query, $threadId);
     }

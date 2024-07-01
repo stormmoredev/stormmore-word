@@ -24,7 +24,7 @@ class ForumController
     )
     {
         $this->categoryValidationRules = [
-            'name'  =>          ['required', 'category-slug', 'maxlen' => 256],
+            'name'  =>          ['required', 'maxlen' => 256],
             'sequence' =>       ['required', 'int'],
             'description' =>    ['maxlen' => 1024]];
     }
@@ -39,14 +39,16 @@ class ForumController
     #[Route("/admin/forum/categories")]
     public function categories(): View
     {
-        $categories = new CategoriesTree($this->forumCategoryFinder->find());
+        $categoriesTree = new CategoriesTree($this->forumCategoryFinder->find());
+        $categories = $categoriesTree->toFlat();
         return view('@backend/forum/categories', ['categories' => $categories]);
     }
 
     #[Route("/admin/forum/categories/add")]
     public function addCategory(): View|Redirect
     {
-        $categories = new CategoriesTree($this->forumCategoryFinder->find());
+        $categoryTree = new CategoriesTree($this->forumCategoryFinder->find());
+        $categories = $categoryTree->toOptionList();
         $form = new Form($this->request);
         $form->rules = $this->categoryValidationRules;
         if ($form->isSubmittedSuccessfully())

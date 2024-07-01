@@ -11,7 +11,7 @@
 </div>
 
 <div class="flex flex-col w-full mt-5">
-    @foreach($categories->toFlatTree() as $category)
+    @foreach($categories as $category)
     <div class="mt-2 text-base leading-7 text-gray-600">
         <a href="{{ url('/admin/forum/categories/edit', ['id' => $category->id]) }}"
             title="{{ _ Edit category '%s' | $category->name }}">

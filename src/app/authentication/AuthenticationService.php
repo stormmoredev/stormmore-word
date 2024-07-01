@@ -24,7 +24,8 @@ readonly class AuthenticationService
         private UserTokenRepository $userTokenRepository,
         private Settings            $settings,
         private UserSecret          $userSecret,
-        private MailNotifications   $mailNotifications
+        private MailNotifications   $mailNotifications,
+        private AuthenticationCookie  $authenticationCookie
     )
     {
         $hybridAuthConfig = $this->settings->getHybridauthConfiguration();
@@ -32,21 +33,26 @@ readonly class AuthenticationService
         $this->hybridauth = new Hybridauth($hybridAuthConfig, storage:  $this->hybridAuthStorage);
     }
 
-    public function signInByEmail($email, $password, $remember = false): array
+    public function signInByEmail($email, $password, $remember = false): bool
     {
         if (empty($email) or empty($password) or !str_contains($email, '@'))
-            return array(false, false);
+            return false;
 
         $password = PasswordHash::hash($password);
-        $user = $this->userRepository->getByEmailAndPassword($email, $password);
-        if ($user == null or !$user->is_activated) return false;
+        $user = $this->userRepository->getByCredentials($email, $password);
+        if ($user == null or !$user->is_activated)
+            return false;
 
         $lifeTime = $this->settings->session->sessionLifeTime;
         $rememberLifeTime = $this->settings->session->rememberSessionLifeTime;
         $validationTimeSpan = $remember ? $lifeTime : $rememberLifeTime;
         $now = new DateTime();
         $validTo = $now->modify($validationTimeSpan);
-        return [$this->sessionStore->create($user->id, $validTo, $remember), $user];
+
+        $sessionKey = $this->sessionStore->create($user->id, $validTo, $remember);
+        $this->authenticationCookie->addUser($user, $sessionKey);
+
+        return true;
     }
 
     public function signIn(stdClass $user): string

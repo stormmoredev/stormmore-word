@@ -14,7 +14,7 @@ readonly class ForumFinder
     {
         $args = array();
         $query =
-            "SELECT e.id, e.title, e.replies, e.issued_at, e.created_at, e.updated_at, u.name as author_name
+            "SELECT e.id, e.title, e.slug, e.replies, e.last_activity_at, e.created_at, e.updated_at, u.name as author_name
             FROM entries AS e
             LEFT OUTER JOIN public.users u on u.id = author_id
             LEFT OUTER JOIN categories c on c.id = category_id
@@ -23,7 +23,7 @@ readonly class ForumFinder
             $args[] = $slug;
             $query .= " AND c.slug = ?";
         }
-        $query .=  " ORDER BY e.issued_at DESC";
+        $query .=  " ORDER BY e.last_activity_at DESC";
         return $this->database->fetchArgs($query, $args);
     }
 
@@ -33,39 +33,45 @@ readonly class ForumFinder
         return $this->database->fetch($query);
     }
 
-    public function getCategoryById($id): ?object
-    {
-        $query = "SELECT * FROM categories WHERE id = ? AND type = 2 AND is_deleted = false";
-        return $this->database->fetchOne($query, $id);
-    }
-
     public function getCategoryBySlug(string $slug): ?object
     {
         $query = "SELECT * FROM categories WHERE slug = ? AND type = 2 AND is_deleted = false";
         return $this->database->fetchOne($query, $slug);
     }
 
-    public function getThreadById(int $id): ?object
+    public function getCategoryById(int $id): ?object
     {
-        $query =
-            "SELECT a.id, a.title, a.content, a.published_at, u.name as author_name
-            FROM entries AS a
-            LEFT OUTER JOIN public.users u on u.id = author_id
-            WHERE a.id = ?
-            ORDER BY a.published_at DESC";
-
+        $query = "SELECT * FROM categories WHERE id = ? AND type = 2 AND is_deleted = false";
         return $this->database->fetchOne($query, $id);
     }
 
-    public function listReplies(int $threadId): array
+    public function getThreadById(int $id): ?object
+    {
+        $query = "SELECT * FROM entries WHERE id = ? AND type = 2 AND is_deleted = false";
+        return $this->database->fetchOne($query, $id);
+    }
+    public function getThreadBySlug(string $slug): ?object
+    {
+        $query =
+            "SELECT e.id, e.title, e.content, e.published_at, u.name as author_name
+            FROM entries AS e
+            LEFT OUTER JOIN public.users u on u.id = author_id
+            WHERE e.slug = ?
+            ORDER BY e.published_at DESC";
+
+        return $this->database->fetchOne($query, $slug);
+    }
+
+    public function listReplies(string $slug): array
     {
         $query =
             "SELECT r.id, r.content, r.created_at, u.name as author_name, u.photo as author_photo
             FROM replies AS r
             LEFT JOIN users u on u.id = author_id
-            WHERE entry_id = ? and is_approved = true and is_deleted = false
+            LEFT JOIN entries e ON e.id = r.entry_id
+            WHERE e.slug = ? and r.is_approved = true and r.is_deleted = false
             ORDER BY r.created_at ASC";
 
-        return $this->database->fetch($query, $threadId);
+        return $this->database->fetch($query, $slug);
     }
 }

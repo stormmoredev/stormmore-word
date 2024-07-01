@@ -1,5 +1,4 @@
 <?php
-/** @var \infrastructure\routing\Routing $routing */
 /** @var object $thread */
 ?>
 @layout @frontend/layout.php
@@ -29,7 +28,7 @@
         <li class="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 py-5 sm:flex-nowrap">
             <div>
                 <p class="text-sm font-semibold leading-6 text-gray-900">
-                    <a href="<?php echo $routing->forumThread($thread) ?>" class="hover:underline">
+                    <a href="<?php echo url("/f/$thread->slug") ?>" class="hover:underline">
                         <?php echo $thread->title ?>
                     </a>
                 </p>

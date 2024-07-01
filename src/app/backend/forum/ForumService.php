@@ -2,18 +2,19 @@
 
 namespace app\backend\forum;
 
-use infrastructure\Slug;
+use app\shared\SlugBuilder;
 
 readonly class ForumService
 {
     public function __construct (
-        private ForumCategoryRepository     $forumCategoryRepository
+        private ForumCategoryRepository     $forumCategoryRepository,
+        private SlugBuilder                 $slugBuilder
     ) { }
 
     public function addCategory($name, $order, $description, $parent_id = null): void
     {
         $parent_id = empty($parent_id) ? null : $parent_id;
-        $slug = Slug::slugify($name);
+        $slug = $this->slugBuilder->buildUniqueCategorySlug($name);
         $this->forumCategoryRepository->addCategory($name, $order, $slug, $description, $parent_id);
     }
 

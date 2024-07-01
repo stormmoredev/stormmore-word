@@ -3,6 +3,8 @@
 namespace infrastructure\settings;
 
 use Cookies;
+use infrastructure\settings\blog\BlogSettings;
+use infrastructure\settings\blog\CommentsSettings;
 use Language;
 
 class Settings
@@ -17,6 +19,8 @@ class Settings
     public string $secretKey;
     public bool $installed;
 
+    public string $homepage;
+
     public bool $multiLanguage = false;
     public Language $defaultApplicationLanguage;
     public array $applicationLanguages = [];
@@ -29,10 +33,11 @@ class Settings
         public SessionSettings        $session = new SessionSettings(),
         public DatabaseSettings       $database = new DatabaseSettings(),
         public AuthenticationSettings $authentication = new AuthenticationSettings(),
-        public CommentsSettings       $comments = new CommentsSettings(),
         public ProfileSettings        $profile = new ProfileSettings(),
         public UploadSettings         $upload = new UploadSettings(),
-        public ForumSettings          $forum = new ForumSettings()
+        public ForumSettings          $forum = new ForumSettings(),
+        public BlogSettings           $blog = new BlogSettings(),
+        public CommunitySettings      $community = new CommunitySettings()
     ) { }
 
     public function setDefaultLanguage($language): void

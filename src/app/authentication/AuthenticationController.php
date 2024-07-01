@@ -46,9 +46,7 @@ readonly class AuthenticationController
             $email = $this->request->parameters['email'];
             $password = $this->request->parameters['password'];
             $remember = $this->request->parameters['remember'];
-            list($sessionKey, $user) = $this->authenticationService->signInByEmail($email, $password, $remember);
-            if ($sessionKey and $user) {
-                $this->authenticationCookie->addUser($user, $sessionKey);
+            if ($this->authenticationService->signInByEmail($email, $password, $remember)) {
                 if ($this->request->hasParameter('redirect')) {
                     return redirect($this->request->decodeParameter('redirect'));
                 }
@@ -58,13 +56,12 @@ readonly class AuthenticationController
             $signInFailed = true;
         }
 
-        $view = view('@frontend/signin');
-        $view->settings = $this->settings;
-        $view->confirmStatus = null;
-        $view->signinFailed = $signInFailed;
-        $view->redirect = $this->request->decodeParameter('redirect');
-
-        return $view;
+        return view('@frontend/signin', [
+            'settings' => $this->settings,
+            'confirmStatus' => null,
+            'signinFailed' => $signInFailed,
+            'redirect' => $this->request->decodeParameter('redirect')
+        ]);
     }
 
     #[Route("/signup")]

@@ -30,12 +30,19 @@ readonly class Database
         }
     }
 
-    public function insert(string $query, ...$args): string
+    public function insert(string $query, ...$args): int
     {
         $args = $this->prepareData($args);
         $stmt = $this->connection->prepare($query);
         $stmt->execute($args);
         return $this->connection->lastInsertId();
+    }
+
+    public function insertWithoutGeneratedId(string $query, ...$args): void
+    {
+        $args = $this->prepareData($args);
+        $stmt = $this->connection->prepare($query);
+        $stmt->execute($args);
     }
 
     public function insertUuid(string $query, ...$args): string

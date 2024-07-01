@@ -28,7 +28,7 @@
             <label for="parent_id" class="block text-sm font-medium leading-6 text-gray-900">
                 {{ _ Parent category }}
             </label>
-            {{ html::select('parent_id', $categories->toOptionList()) }}
+            {{ html::select('parent_id', $categories) }}
         </div>
         <div class="col-span-full">
             <label for="description" class="block text-sm font-medium leading-6 text-gray-900">

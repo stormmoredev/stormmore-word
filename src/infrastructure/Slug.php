@@ -6,17 +6,6 @@ use Transliterator;
 
 class Slug
 {
-    public function article($id, $title): string
-    {
-        $slug = self::slugify($title);
-        return $id . '-' . $slug;
-    }
-
-    public function getParameters(string $slug): array
-    {
-        return array_slice(explode('-', $slug), 0);
-    }
-
     public static function slugify(string $title): string
     {
         $rules = ':: Any-Latin; :: Latin-ASCII; :: NFD; :: [:Nonspacing Mark:] Remove; :: Lower(); :: NFC;';

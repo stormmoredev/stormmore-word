@@ -30,4 +30,14 @@ class CategoriesTree
         }
         return $categories;
     }
+
+    public function toOptionList(): array
+    {
+        $option = array();
+        $option[null] = '';
+        foreach ($this->toFlat() as $item) {
+            $option[$item->id] = $item->nameWithNestPrefix;
+        }
+        return $option;
+    }
 }

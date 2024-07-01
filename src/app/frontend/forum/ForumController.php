@@ -4,10 +4,10 @@ namespace app\frontend\forum;
 
 use Authenticate;
 use Controller;
-use Form;
 use Exception;
+use Form;
 use infrastructure\CategoriesTree;
-use infrastructure\routing\Routing;
+use infrastructure\ModuleRouter;
 use infrastructure\settings\Settings;
 use Redirect;
 use Request;
@@ -22,63 +22,40 @@ readonly class ForumController
         private Settings     $settings,
         private ForumFinder  $forumFinder,
         private ForumService $forumService,
-        private Routing      $routing)
+        private ModuleRouter $homeRouter)
     { }
 
-    #[Route("/f", "/f/:route")]
-    public function index(): View
+    #[Route("/f")]
+    public function homepage(): View
     {
-        $this->settings->forum->enabled or throw new Exception("", 404);
-
-        $slug = null;
-        if ($this->request->has('route')) {
-            $route = $this->request->get('route');
-            $route = $this->routing->parse($route);
-            if ($route->isEntry()) {
-                return $this->thread($route->id);
-            }
-            $slug = $route->slug;
-        }
-
-        return $this->threads($slug);
+        return $this->homeRouter->forum();
     }
 
-    private function threads(?string $slug): View
+    #[Route("/f/:slug")]
+    public function thread(): View
     {
-        $category = null;
-        if ($slug !== null) {
-            $category = $this->forumFinder->getCategoryBySlug($slug);
-            $category !== null or throw new Exception("Forum $slug not found.", 404);
-        }
-        $threads = $this->forumFinder->listThreads($slug);
-        return view('@frontend/forum/index', [
-            'threads' => $threads,
-            'category' => $category,
-            'routing' => $this->routing
-        ]);
-    }
-
-    private function thread($id): View
-    {
-        $thread = $this->forumFinder->getThreadById($id);
+        $slug = $this->request->get("slug");
+        $thread = $this->forumFinder->getThreadBySlug($slug);
         $thread !== null or throw new Exception("Thread not found.", 404);
-        $thread = $this->forumFinder->getThreadById($id);
-        $replies = $this->forumFinder->listReplies($id);
+
+        $replies = $this->forumFinder->listReplies($slug);
         return view('@frontend/forum/thread', [
             'thread' => $thread,
             'replies' => $replies
         ]);
     }
 
-    private function list(string $slug): View
+    #[Route("/fc/:slug")]
+    public function category(): View
     {
-        $category = $this->forumFinder->getCategoryBySlug($slug);
+        $this->settings->forum->enabled or throw new Exception("", 404);
+
+        $slug = $this->request->get('slug');
         $threads = $this->forumFinder->listThreads($slug);
+        $category = $this->forumFinder->getCategoryBySlug($slug);
         return view('@frontend/forum/index', [
             'threads' => $threads,
-            'category' => $category,
-            'cid' => $category->id,
-            'routing' => $this->routing
+            'category' => $category
         ]);
     }
 
@@ -96,8 +73,8 @@ readonly class ForumController
 
         if ($form->isSubmittedSuccessfully()) {
             list($title, $content) = $this->request->get('title', 'content');
-            $id = $this->forumService->addThread($cid, $title, $content);
-            return redirect($this->routing->forumThreadByTitleAndId($title, $id));
+            $slug = $this->forumService->addThread($cid, $title, $content);
+            return redirect("/f/$slug");
         }
 
         $hasUrlCategoryParameter = $this->request->hasGetParameter('c');
@@ -121,6 +98,7 @@ readonly class ForumController
         $threadId = $this->request->getParameter('thread-id');
         $content = $this->request->getParameter('content');
         $this->forumService->addPost($threadId, $content);
-        return redirect('/f/thread/' . $threadId);
+        $thread = $this->forumFinder->getThreadById($threadId);
+        return redirect("/f/$thread->slug");
     }
 }

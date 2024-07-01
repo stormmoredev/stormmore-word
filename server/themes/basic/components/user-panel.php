@@ -1,5 +1,14 @@
-<div class="flex justify-end my-5 text-sm font-semibold leading-6">
+<div class="flex justif  my-5 text-sm font-semibold leading-6">
     <div id="user-authenticated"></div>
+
+    @if($settings->blog->enabled)
+    <a href="{{ url('/b/add-post') }}" class="block rounded-md bg-sky-600 px-3 py-2 self-center
+    text-center text-sm font-semibold text-white shadow-sm hover:bg-sky-500 focus-visible:outline
+    focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 self-center">
+        {{ _ post_add }}
+    </a>
+    @end
+
     @if ($settings->authentication->enabled)
     <div id="user-anonymous" class="hidden text-sky-600 hover:text-sky-500">
         <a href=" {{ url('/signin') }} ">{{ _ Sign in }}</a>

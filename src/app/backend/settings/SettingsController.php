@@ -3,7 +3,7 @@
 namespace app\backend\settings;
 
 use Controller;
-use infrastructure\FileSystem\Cache;
+use infrastructure\file_system\Cache;
 use infrastructure\Languages;
 use infrastructure\MailNotifications;
 use infrastructure\settings\Settings;

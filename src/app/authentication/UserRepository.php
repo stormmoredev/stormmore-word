@@ -28,7 +28,7 @@ class UserRepository
         return $this->database->fetchOne($query, $email);
     }
 
-    public function getByEmailAndPassword(string $email, string $password)
+    public function getByCredentials(string $email, string $password)
     {
         $query = 'SELECT id, name, role, photo, is_activated FROM users WHERE email = ? AND password = ?';
         return $this->database->fetchOne($query, $email, $password);

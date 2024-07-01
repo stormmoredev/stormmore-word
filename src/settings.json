@@ -15,6 +15,18 @@
   "applicationLanguages": ["en","en-US", "pl", "de"],
   "enabledLanguages": ["en", "pl", "de"],
 
+  "homepage": "b",
+  "blog": {
+    "enabled": true,
+    "comments": {
+      "enabled": true,
+      "approvalIsRequired": false,
+      "maxChars": 1000
+    }
+  },
+  "community": {
+    "enabled": true
+  },
   "forum": {
     "enabled" : true
   },
@@ -22,13 +34,7 @@
   "editorEntry": {
     "maxChars": 3000,
     "maxWords": 1000,
-    "maxPreviewChars": 550
-  },
-
-  "comments": {
-    "enabled": true,
-    "approvalIsRequired": false,
-    "maxChars": 1000
+    "maxPreviewChars": 400
   },
 
   "profile": {
