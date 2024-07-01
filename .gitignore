@@ -3,7 +3,7 @@
 
 server/media/**
 
-settings.**
+settings.**.json
 settings.development.json
 .cache/**
 
