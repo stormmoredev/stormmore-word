@@ -179,9 +179,12 @@ class PostGratitude {
     }
 }
 
-document.addEventListener("DOMContentLoaded", function() {
+window.addEventListener("load", function() {
     replaceDateTimeDiff();
     replaceDatetime();
+});
+
+document.addEventListener("DOMContentLoaded", function() {
     buildAuthentication();
 
     PostGratitude.initialize();
