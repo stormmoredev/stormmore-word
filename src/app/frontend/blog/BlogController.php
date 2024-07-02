@@ -7,6 +7,7 @@ use infrastructure\AjaxResult;
 use infrastructure\ModuleRouter;
 use infrastructure\settings\Settings;
 use infrastructure\Slug;
+use Form;
 
 #[Controller]
 readonly class BlogController
@@ -73,7 +74,11 @@ readonly class BlogController
     #[Route("/b/add-post")]
     public function addPost(): View|Redirect
     {
-        if ($this->request->isPost()) {
+        $form = new Form($this->request);
+        $form->rules = [
+          'media' => ['TitleMedia']
+        ];
+        if ($form->isSubmittedSuccessfully()) {
             $post = $this->request->toObject(['title', 'subtitle', 'content', 'media']);
             $slug = $this->blogService->addPost($post);
             return redirect("/b/$slug");
