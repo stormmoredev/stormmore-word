@@ -76,13 +76,18 @@ readonly class BlogController
     {
         $form = new Form($this->request);
         $form->rules = [
-          'media' => ['TitleMedia']
+            'title' => ['required', 'maxlen' => 128],
+            'subtitle' => ['required', 'maxlen' => 256],
+            'content' => ['required', 'maxlen' => 256],
+            'media' => ['titled_media']
         ];
         if ($form->isSubmittedSuccessfully()) {
             $post = $this->request->toObject(['title', 'subtitle', 'content', 'media']);
             $slug = $this->blogService->addPost($post);
             return redirect("/b/$slug");
         }
-        return view('@frontend/blog/add-post');
+        return view('@frontend/blog/add-post', [
+            'form' => $form
+        ]);
     }
 }

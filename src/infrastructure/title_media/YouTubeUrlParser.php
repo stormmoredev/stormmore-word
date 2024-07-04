@@ -1,5 +1,7 @@
 <?php
 
+namespace infrastructure\title_media;
+
 class YouTubeUrlParser
 {
     public function getVideoId(string $url): ?string
@@ -10,5 +12,13 @@ class YouTubeUrlParser
             return $params["v"];
         }
         return null;
+    }
+
+    public function convertToEmbedUrl(?string $url): ?string
+    {
+        if (empty($url)) return "";
+
+        $videoId = $this->getVideoId($url);
+        return "https://www.youtube.com/embed/$videoId";
     }
 }

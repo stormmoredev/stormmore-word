@@ -1,10 +1,10 @@
 <?php
 
-namespace infrastructure\TitleMedia;
+namespace infrastructure\title_media;
 
 use IValidator;
 use ValidatorResult;
-use YouTubeUrlParser;
+use infrastructure\title_media\YouTubeUrlParser;
 
 readonly class TitledMediaValidator implements IValidator
 {
@@ -17,10 +17,12 @@ readonly class TitledMediaValidator implements IValidator
         if (empty($value)) return new ValidatorResult();
 
         if (str_starts_with($value, 'https://www.youtube.com/')) {
-            $videoId = $this->youtubeUrlParser->getVideoId($value);
-            return new ValidatorResult();
+            $headers = get_headers($value);
+
+            if (substr($headers[0], 9, 3) === "404")
+                return new ValidatorResult(false, "Video not found");
         }
 
-        return new ValidatorResult();
+        return new ValidatorResult(false);
     }
 }

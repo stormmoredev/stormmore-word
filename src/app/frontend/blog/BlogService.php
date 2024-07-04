@@ -6,15 +6,17 @@ use app\authentication\StormUser;
 use app\shared\EntryService;
 use app\shared\SlugBuilder;
 use infrastructure\settings\Settings;
+use infrastructure\title_media\YouTubeUrlParser;
 use stdClass;
 
 readonly class BlogService extends EntryService
 {
     public function __construct(
-        private Settings       $settings,
-        private StormUser      $user,
-        private BlogRepository $blogRepository,
-        private SlugBuilder    $slugBuilder)
+        private Settings         $settings,
+        private StormUser        $user,
+        private BlogRepository   $blogRepository,
+        private SlugBuilder      $slugBuilder,
+        private YouTubeUrlParser $youTubeUrlParser)
     {
         parent::__construct($this->blogRepository, $this->user);
     }
@@ -24,6 +26,7 @@ readonly class BlogService extends EntryService
         $post->slug = $this->slugBuilder->buildUniqueEntrySlug($post->title);
         $post->author_id = $this->user->id;
         $post->language = $this->settings->defaultLanguage->primary;
+        $post->media = $this->youTubeUrlParser->convertToEmbedUrl($post->media);
 
         $id = $this->blogRepository->insertPost($post);
         $this->blogRepository->insertMediaTitle($id, $post->media);
