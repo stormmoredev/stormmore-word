@@ -20,7 +20,20 @@ function profile_photo($username, $photo): void
     }
 }
 
-function author_profile($username, $profile): void
+function post_titled_media_thumb(?string $titled_media): void
+{
+    if (empty($titled_media)) return;
+
+    if (str_starts_with($titled_media, 'https://www.youtube.com/')) {
+        echo "<iframe height=\"128\" width=\"256\" src=\"$titled_media\"></iframe>";
+    }
+    else {
+        $src = url(concatenate_paths('media', $titled_media));
+        echo "<img src=\"$src\" />";
+    }
+}
+
+function author_profile_sm($username, $profile): void
 {
     $initials = $username[0];
     if ($profile == null) {
@@ -38,5 +51,5 @@ function author_profile($username, $profile): void
 
 function print_post($post): void
 {
-    print_view('@frontend/blog/post-item', ['post' => $post]);
+    print_view('@frontend/blog/list-item', ['post' => $post]);
 }

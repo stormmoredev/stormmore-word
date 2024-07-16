@@ -9,13 +9,20 @@ ENV STORM_ENV=development
 RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
 WORKDIR /usr/dev
 
-#Postgres
+#postgres
 RUN apk add postgresql-dev
 RUN docker-php-ext-install pdo pdo_pgsql
 RUN docker-php-ext-enable pdo pdo_pgsql
+#exif
+RUN docker-php-ext-install exif
+RUN docker-php-ext-enable exif
 #imagick
-RUN apk add --no-cache ${PHPIZE_DEPS} imagemagick imagemagick-dev libjpeg-turbo
-RUN pecl install -o -f imagick
+# RUN apk add --no-cache ${PHPIZE_DEPS} imagemagick imagemagick-dev libjpeg-turbo
+# RUN pecl install -o -f imagick
+# RUN docker-php-ext-enable imagick
+# RUN apk del --no-cache ${PHPIZE_DEPS}
+RUN apk add --no-cache ${PHPIZE_DEPS} imagemagick-dev libpng libjpeg-turbo libwebp
+RUN pecl install imagick
 RUN docker-php-ext-enable imagick
 RUN apk del --no-cache ${PHPIZE_DEPS}
 #intl

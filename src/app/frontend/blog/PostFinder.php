@@ -17,11 +17,10 @@ readonly class PostFinder
     {
         $previewMaxChars = $this->settings->editorEntry->maxPreviewChars;
         $query =
-            "SELECT e.id, e.title, e.subtitle, m.url, e.slug, substring(e.content, 0, $previewMaxChars) as content,
+            "SELECT e.id, e.title, e.subtitle, e.titled_media, e.slug, substring(e.content, 0, $previewMaxChars) as content,
                 e.last_activity_at, u.photo as profile, u.name as username, e.created_at, e.replies_num, e.votes_num
             FROM entries AS e
             LEFT JOIN users u on u.id = author_id
-            LEFT JOIN entry_title_media m on m.entry_id = e.id
             WHERE e.language = ? and e.type = 1
             ORDER BY e.last_activity_at DESC";
 
@@ -31,10 +30,9 @@ readonly class PostFinder
     public function getBySlug(string $slug): stdClass
     {
         $query =
-            "SELECT e.id, e.title, e.slug, e.votes_num , m.url, e.content, e.published_at, u.name as author_name
+            "SELECT e.id, e.title, e.slug, e.votes_num , e.titled_media, e.content, e.published_at, u.name as author_name
             FROM entries AS e
             LEFT JOIN public.users u on u.id = author_id
-            LEFT JOIN entry_title_media m on m.entry_id = e.id
             WHERE e.slug = ?
             ORDER BY e.published_at DESC";
 

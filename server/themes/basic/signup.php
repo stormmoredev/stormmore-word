@@ -41,7 +41,7 @@
     </div>
     @end
     <div class="mt-7 sm:mx-auto sm:w-full sm:max-w-sm">
-        <form action="/signup" method="POST" class="form">
+        <form action="/signup" method="POST" class="signup-form">
             <div class="row">
                 {{ $form->label("name", "Username") }}
                 {{ $form->text("name") }}

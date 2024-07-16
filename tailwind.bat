@@ -1,1 +1,1 @@
-npx tailwindcss -i ./server/public/style.css -o ./server/public/main.css --watch
+npx tailwindcss -i ./server/public/frontend.css -o ./server/public/main.css --watch

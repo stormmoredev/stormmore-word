@@ -3,10 +3,10 @@
 @layout @frontend/layout.php
 
 <article id="article">
-    <header class="flex flex-row justify-between items-center">
-        <a href="/" type="button" aria-label="Go back to articles"
+    <header class="flex flex-row justify-between items-center mb-14">
+        <a href="/" type="button" label="<?php echo _('back_to_articles') ?>"
            class="flex h-10 w-10 items-center justify-center rounded-full bg-white
-                shadow-md shadow-zinc-800/5 ring-1 ring-zinc-900/5">
+                shadow-md shadow-zinc-800/5 ring-1 ring-zinc-900/5 hover:bg-gray-100 hover:stroke-white">
             <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" class="h-4 w-4 stroke-zinc-500">
                 <path d="M7.25 11.25 3.75 8m0 0 3.5-3.25M3.75 8h8.5" stroke-width="1.5" stroke-linecap="round"
                       stroke-linejoin="round">
@@ -25,12 +25,7 @@
         </div>
     </header>
     <h3>{{ $post->title }}</h3>
-    @if ($post->url)
-    <iframe class="py-4" height="480" width="768" src="{{ $post->url }}"></iframe>
-    @end
-    <div class="text-zinc-600 prose">
-        {{ $post->content }}
-    </div>
+    <div class="text-zinc-600 prose">{{ $post->content }}</div>
 </article>
 
 @if ($settings->blog->comments->enabled)
@@ -87,22 +82,22 @@
 @end
 
 @if (count($comments))
-    <div class="mt-10">
-        @foreach($comments as $comment)
-        <div id="comment-{{ $comment->id }}" class="flex mt-5 space-x-4 text-sm">
-            <div class="flex-none py-0">
-                {{ profile_photo($comment->author_name, $comment->author_photo) }}
-            </div>
-            <div class="flex-1 py-0 ">
-                <h3 class="font-medium text-gray-900">{{ $comment->author_name }}</h3>
-                <p class="text-xs convert-to-datetime-diff"
-                   data-date="{{ $comment->created_at | js_datetime }}"
-                </p>
-                <div class="text-base mt-2 max-w-none text-gray-700">
-                    <p>{{ $comment->content }}</p>
-                </div>
+<div class="mt-10">
+    @foreach($comments as $comment)
+    <div id="comment-{{ $comment->id }}" class="flex mt-5 space-x-4 text-sm">
+        <div class="flex-none py-0">
+            {{ profile_photo($comment->author_name, $comment->author_photo) }}
+        </div>
+        <div class="flex-1 py-0 ">
+            <h3 class="font-medium text-gray-900">{{ $comment->author_name }}</h3>
+            <p class="text-xs convert-to-datetime-diff"
+               data-date="{{ $comment->created_at | js_datetime }}"
+            </p>
+            <div class="text-base mt-2 max-w-none text-gray-700">
+                <p>{{ $comment->content }}</p>
             </div>
         </div>
-        @end
     </div>
+    @end
+</div>
 @end

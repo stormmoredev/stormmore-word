@@ -1,15 +1,16 @@
 <html xmlns="http://www.w3.org/1999/html">
 <head>
     <title>{{ $settings->name }}</title>
-    <link href="{{ url('/public/main.css') }}" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href=" {{ url('/public/storm-cms.ico') }}">
+    <link href="<?php echo url('/public/main.css') ?>" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="<?php echo url('/public/storm-cms.ico') ?>">
 </head>
 
 <body class="d-flex align-items-center py-2 bg-body-tertiary">
 <div class="flex min-h-full flex-col justify-center px-6 py-7 lg:px-8">
     <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-        <a href="{{ url('/') }}"><img class="mx-auto  w-auto"
-                                      src="{{ url('/public/images/storm-cms.png') }}" alt="Storm CMS"></a>
+        <a href="<?php echo url('/') ?>">
+            <img class="mx-auto  w-auto" src="{{ url('/public/images/storm-cms.png') }}" alt="Storm CMS">
+        </a>
         <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
             Sign in to
             {{ $settings->name }} account
@@ -74,7 +75,7 @@
             </div>
         </div>
         @end
-        <form action="{{ url('/signin', ['redirect' => $redirect]) }}" method="POST" class="form">
+        <form action="{{ url('/signin', ['redirect' => $redirect]) }}" method="POST" class="signin-form">
             <div class="row">
                 <label for="email">{{ _ Email }}</label>
                 <input id="email" name="email" type="text"  required>

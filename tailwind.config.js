@@ -6,7 +6,7 @@ const typographyStyles = require('./typography')
 module.exports = {
     content: ["./src/app/backend/templates/**/*.php",
         "./server/themes/**/*.php"],
-    plugins: [typographyPlugin, forms],
+    plugins: [],
     theme: {
         fontSize: {
             xs: ['0.8125rem', { lineHeight: '1.5rem' }],

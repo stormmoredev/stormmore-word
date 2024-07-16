@@ -15,6 +15,9 @@
   "post_media_media": "Paste media url here (YouTube, image etc.)",
   "post_gratitude": "gratitudes",
   "post_comments": "comments",
+  "post_title_required": "Title is required",
+  "post_subtitle_required": "Subtitle is required",
+  "post_content_required": "Content is required",
 
   "date_interval_y_singular": "year ago",
   "date_interval_y_plural": "%s years ago",

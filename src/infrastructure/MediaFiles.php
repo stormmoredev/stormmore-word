@@ -3,10 +3,33 @@
 namespace infrastructure;
 
 use Imagick;
-use STORM, Exception;
+use ImagickException;
+use UnknownPathAliasException;
 
 readonly class MediaFiles
 {
+    /**
+     * @throws ImagickException
+     * @throws UnknownPathAliasException
+     */
+    public function writePostTitledMedia($mediaUrl): string
+    {
+        $dir = resolve_path_alias('@media');
+        $filename = gen_unique_file_name(64, 'webp' , $dir);
+        $filepath = concatenate_paths($dir, $filename);
+        file_put_contents($filepath, fopen($mediaUrl, 'r'));
+
+        $imagick = new Imagick($filepath);
+        $imagick->cropThumbnailImage(256, 128);
+        $imagick->writeImage($filepath);
+
+        return $filename;
+    }
+
+    /**
+     * @throws ImagickException
+     * @throws UnknownPathAliasException
+     */
     public function writeProfilePhoto($photo, $name): void
     {
         $filePath = resolve_path_alias("@profile/$name");

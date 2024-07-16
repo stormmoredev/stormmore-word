@@ -21,7 +21,7 @@
 
 .btn {
     @apply hover:bg-slate-100 px-4 py-1 font-semibold text-sm
-        bg-white text-slate-700 border border-slate-300 rounded-md shadow-sm
+    bg-white text-slate-700 border border-slate-300 rounded-md shadow-sm
 }
 
 .btn[disabled] {
@@ -42,8 +42,8 @@
 
 .form input[type=text], input[type=password], select {
     @apply block w-full rounded-md border-0 py-1.5 pl-3 text-gray-900
-        shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2
-        focus:ring-inset focus:ring-blue-400
+    shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2
+    focus:ring-inset focus:ring-blue-400
 }
 
 .form input[type=checkbox] {
@@ -81,5 +81,3 @@
 #article h2 {
     @apply font-semibold mb-1 mt-5
 }
-
-

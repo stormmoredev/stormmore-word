@@ -4,17 +4,29 @@
 
 use Random\Randomizer;
 
-class FileNotFoundException extends Exception { }
+class FileNotFoundException extends Exception
+{
+}
 
-class UnknownPathAliasException extends Exception { }
+class UnknownPathAliasException extends Exception
+{
+}
 
-class DiResolveException extends Exception { }
+class DiResolveException extends Exception
+{
+}
 
-class AjaxAuthenticationException extends Exception { }
+class AjaxAuthenticationException extends Exception
+{
+}
 
-class AuthenticationException extends Exception { }
+class AuthenticationException extends Exception
+{
+}
 
-class UnauthorizedException extends Exception { }
+class UnauthorizedException extends Exception
+{
+}
 
 /**
  * @throws UnknownPathAliasException if path alias not found
@@ -1216,6 +1228,11 @@ class Form
         $this->model = $model;
     }
 
+    function addRules(array $rules): void
+    {
+        $this->rules = $rules;
+    }
+
     function removeRule(string $field, string $name): void
     {
         if (array_key_exists($field, $this->rules) and array_key_exists($name, $this->rules[$field])) {
@@ -1257,14 +1274,32 @@ class Form
         return html::checkbox($name, $value);
     }
 
-    function error($name): ?string
+    function printError($name, string $message = null): void
     {
         if ($this->validationResult != null) {
             $field = $this->validationResult->__get($name);
-            return html::error($field->valid, $field->message);
+            $message = empty($message) ? $field->message : $message;
+            echo html::error($field->valid, $message);
         }
+    }
 
-        return null;
+    function hasError($name): ?bool
+    {
+        return $this->validationResult?->__get($name)->invalid;
+    }
+
+    function printIfError(string $name, string $present): void
+    {
+        if ($this->hasError($name))
+            echo $present;
+    }
+
+    function printIfElseError(string $name, string $present, string $notPresent): void
+    {
+        if ($this->hasError($name))
+            echo $present;
+        else
+            echo $notPresent;
     }
 
     function validate(): ValidationResult
@@ -1287,6 +1322,7 @@ class Form
     {
         return $this->request->isPost() and $this->validate()->isValid();
     }
+    
 
     public function getValue($name, $empty = null): mixed
     {
@@ -1466,7 +1502,8 @@ class RequiredValidator implements IValidator
     function validate(mixed $value, string $name, array $data, mixed $args): ValidatorResult
     {
         if (empty($value)) {
-            return new ValidatorResult(false, _("Field is required"));
+            $message  = array_key_value($args, 'message', _('Field is required'));
+            return new ValidatorResult(false, $message);
         }
         return new ValidatorResult();
     }
@@ -1551,7 +1588,7 @@ class MaxValidator implements IValidator
     }
 }
 
-class MaxlenValidator implements IValidator
+class MaxlengthValidator implements IValidator
 {
     function validate(mixed $value, string $name, array $data, mixed $max): ValidatorResult
     {

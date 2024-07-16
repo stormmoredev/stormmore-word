@@ -149,15 +149,27 @@ const forumEntry = {
         textarea.style.height = textarea.scrollHeight + "px";
     }
 }
-const blogEntry = {
-    onTitleKeydown: function(e) {
-        if (e.keyCode === 13) {
-            e.preventDefault();
-            document.getElementById('content').focus();
-        }
-    },
-    onContentChange: function(textarea) {
-        textarea.style.height = textarea.scrollHeight + "px";
+
+class BlogEntry {
+    static initialize() {
+        $.in('#add-post-form', (form) => {
+            form.keyPressOn('#title', e => {
+                if (e.isKeyPressed(13)) {
+                    e.preventDefault();
+                    form.find('#subtitle').focus();
+                }
+            });
+            form.keyPressOn('#subtitle', e => {
+                if (e.isKeyPressed(13)) {
+                    e.preventDefault();
+                    form.find('#content').focus();
+                }
+            });
+            form.inputOn('#content', (e, content) => {
+                const scrollHeight = content.ori.scrollHeight;
+                content.setHeight(scrollHeight);
+            })
+        });
     }
 }
 
@@ -188,6 +200,7 @@ document.addEventListener("DOMContentLoaded", function() {
     buildAuthentication();
 
     PostGratitude.initialize();
+    BlogEntry.initialize();
     Reply.initialize('write-reply');
     Reply.initialize('write-comment');
 });

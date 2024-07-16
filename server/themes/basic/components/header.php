@@ -43,7 +43,7 @@
 
             <div class="flex justify-end text-sm font-semibold show-on-load">
                 @if ($settings->authentication->enabled)
-                <a  href=" {{ url('/signin') }} "id="user-anonymous" class="hidden text-sky-600 hover:text-sky-500">
+                <a  href=" {{ url('/signin') }} "id="user-anonymous" class="hidden block items-center text-sky-600 hover:text-sky-500">
                     {{ _ sign_in }}
                 </a>
                 @end

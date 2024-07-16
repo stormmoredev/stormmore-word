@@ -77,6 +77,7 @@ create table entries
     subtitle         varchar(256)                           null,
     slug             varchar(128)                           not null UNIQUE,
     content          text                                   not null,
+    titled_media     varchar(512)                               null,
     language         varchar(8)                             not null,
     type             smallint                 DEFAULT 1     not null,
     opens_num        int                      DEFAULT 0     not null,
@@ -89,13 +90,6 @@ create table entries
     last_activity_at timestamp with time zone DEFAULT now(),
     created_at       timestamp with time zone DEFAULT now() not null,
     updated_at       timestamp with time zone DEFAULT now() not null
-);
-
-create table entry_title_media
-(
-    entry_id integer      not null
-        constraint entry_title_media_entries__fk references entries (id) primary key ,
-    url      varchar(512) not null
 );
 
 create table entry_votes

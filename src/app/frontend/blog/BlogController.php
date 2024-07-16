@@ -1,27 +1,35 @@
 <?php
 
-use app\authentication\StormUser;
-use app\frontend\blog\BlogService;
-use app\frontend\blog\PostFinder;
+/** @noinspection PhpUnused */
+
+namespace app\frontend\blog;
+
 use infrastructure\AjaxResult;
 use infrastructure\ModuleRouter;
 use infrastructure\settings\Settings;
-use infrastructure\Slug;
-use Form;
+
+use Controller;
+use Route;
+use ResponseCache;
+use Request;
+use I18n;
+use View;
+use Redirect;
+use Authenticate;
+use PostMethod;
+use AjaxAuthenticate;
 
 #[Controller]
 readonly class BlogController
 {
     public function __construct(
-        private StormUser      $user,
-        private ResponseCache  $responseCache,
-        private Request        $request,
-        private Slug           $slug,
-        private Settings       $settings,
-        private I18n           $i18n,
-        private PostFinder     $postFinder,
-        private ModuleRouter   $homeRouter,
-        private BlogService    $blogService)
+        private ResponseCache $responseCache,
+        private Request       $request,
+        private Settings      $settings,
+        private I18n          $i18n,
+        private PostFinder    $postFinder,
+        private ModuleRouter  $homeRouter,
+        private BlogService   $blogService)
     {
     }
 
@@ -74,13 +82,8 @@ readonly class BlogController
     #[Route("/b/add-post")]
     public function addPost(): View|Redirect
     {
-        $form = new Form($this->request);
-        $form->rules = [
-            'title' => ['required', 'maxlen' => 128],
-            'subtitle' => ['required', 'maxlen' => 256],
-            'content' => ['required', 'maxlen' => 256],
-            'media' => ['titled_media']
-        ];
+        $form = new AddPostForm($this->request);
+
         if ($form->isSubmittedSuccessfully()) {
             $post = $this->request->toObject(['title', 'subtitle', 'content', 'media']);
             $slug = $this->blogService->addPost($post);

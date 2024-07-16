@@ -2,6 +2,7 @@
 <html class="h-full antialiased">
 <head>
     <title>Stormmore CommunityWord</title>
+    <script type="text/javascript" src="{{ url('public/stormmore-framework.js') }}"></script>
     <script type="text/javascript" src="{{ url('public/script.js') }}"></script>
     <script type="text/javascript" src="{{ url('public/shared.js') }}"></script>
     <link rel="icon" type="image/x-icon" href="{{ url('/public/images/storm-cms.ico') }}">

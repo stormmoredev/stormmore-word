@@ -15,11 +15,12 @@ readonly class BlogRepository extends EntryRepository
 
     public function insertPost(object $post): int
     {
-        $query = "INSERT INTO entries (title, subtitle, slug, content, language, author_id, type) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $query = "INSERT INTO entries (title, subtitle, titled_media, slug, content, language, author_id, type) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         $this->database->insert($query,
             $post->title,
             $post->subtitle,
+            $post->media,
             $post->slug,
             $post->content,
             $post->language,
@@ -37,11 +38,5 @@ readonly class BlogRepository extends EntryRepository
             $comment->is_approved);
 
         return $this->database->lastInsertedId();
-    }
-
-    public function insertMediaTitle(int $entryId, string $url): int
-    {
-        $query = "INSERT INTO entry_title_media (entry_id, url) VALUES(?, ?)";
-        return $this->database->insert($query, $entryId, $url);
     }
 }

@@ -45,7 +45,7 @@ readonly class ModuleRouter
         $lang = $this->user->language->primary;
         $posts = $this->postFinder->findPosts($lang);
 
-        return view("@frontend/blog/index", [
+        return view("@frontend/blog/list", [
             'settings'  =>  $this->settings,
             'posts'     =>  $posts,
             'count' => 55

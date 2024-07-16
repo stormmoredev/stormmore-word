@@ -6,31 +6,34 @@ use app\authentication\StormUser;
 use app\shared\EntryService;
 use app\shared\SlugBuilder;
 use infrastructure\settings\Settings;
-use infrastructure\title_media\YouTubeUrlParser;
+use infrastructure\title_media\TitledMediaProcessor;
 use stdClass;
+use UnknownPathAliasException;
 
 readonly class BlogService extends EntryService
 {
     public function __construct(
-        private Settings         $settings,
-        private StormUser        $user,
-        private BlogRepository   $blogRepository,
-        private SlugBuilder      $slugBuilder,
-        private YouTubeUrlParser $youTubeUrlParser)
+        private Settings             $settings,
+        private StormUser            $user,
+        private BlogRepository       $blogRepository,
+        private SlugBuilder          $slugBuilder,
+        private TitledMediaProcessor $titledMediaProcessor)
     {
         parent::__construct($this->blogRepository, $this->user);
     }
 
+    /**
+     * @throws UnknownPathAliasException
+     */
     public function addPost(object $post): string
     {
         $post->slug = $this->slugBuilder->buildUniqueEntrySlug($post->title);
         $post->author_id = $this->user->id;
         $post->language = $this->settings->defaultLanguage->primary;
-        $post->media = $this->youTubeUrlParser->convertToEmbedUrl($post->media);
 
-        $id = $this->blogRepository->insertPost($post);
-        $this->blogRepository->insertMediaTitle($id, $post->media);
+        $post->media = $this->titledMediaProcessor->process($post->media);
 
+        $this->blogRepository->insertPost($post);
         return $post->slug;
     }
 
