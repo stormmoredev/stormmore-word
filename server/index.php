@@ -31,8 +31,9 @@ $app->addConfiguration(function(AppConfiguration $configuration, Di $di)
         '@media' => "../server/media",
         '@profile' => "../server/media/profile",
         '@frontend' => "../server/themes/$settings->theme",
-        '@frontend-components' => "../server/themes/$settings->theme/components",
-
+        '@f-components' => "../server/themes/$settings->theme/components",
+        '@f-icons' =>  "../server/public/images/icons",
+        '@proto' => "../server/themes/proto"
     ];
     $configuration->cacheEnabled = false;
     $configuration->cacheDir = '../.cache';

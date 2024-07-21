@@ -14,6 +14,6 @@ readonly class SettingsComponent implements IViewComponent
 
     function view(): View
     {
-        return view('@frontend-components/settings', ['settings' => $this->settings]);
+        return view('@f-components/settings', ['settings' => $this->settings]);
     }
 }

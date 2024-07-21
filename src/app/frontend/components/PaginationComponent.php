@@ -32,7 +32,7 @@ class PaginationComponent implements IViewComponent
         $parameters['page'] = $page + 1;
         $nextUrl = url($path, $parameters);
 
-        return view('@frontend-components/pagination', [
+        return view('@f-components/pagination', [
             'nextUrl' => $nextUrl,
             'prevUrl' => $prevUrl,
             'pageNum' => $pageNum,

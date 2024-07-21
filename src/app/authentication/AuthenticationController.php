@@ -7,6 +7,7 @@ use Cookies;
 use Exception;
 use Form;
 use Hybridauth\Hybridauth;
+use infrastructure\AjaxResult;
 use infrastructure\settings\Settings;
 use Redirect;
 use Request;
@@ -43,14 +44,15 @@ readonly class AuthenticationController
 
         $signInFailed = false;
         if ($this->request->isPost()) {
-            $email = $this->request->parameters['email'];
-            $password = $this->request->parameters['password'];
-            $remember = $this->request->parameters['remember'];
-            if ($this->authenticationService->signInByEmail($email, $password, $remember)) {
+            list($email, $password) = $this->request->get('email', 'password');
+            if ($this->authenticationService->signInByEmail($email, $password)) {
                 if ($this->request->hasParameter('redirect')) {
                     return redirect($this->request->decodeParameter('redirect'));
                 }
-                return redirect();
+                if (str_ends_with($this->request->getReferer(), '/signin')) {
+                    return redirect();
+                }
+                return back();
             }
 
             $signInFailed = true;
@@ -62,6 +64,15 @@ readonly class AuthenticationController
             'signinFailed' => $signInFailed,
             'redirect' => $this->request->decodeParameter('redirect')
         ]);
+    }
+
+    #[Route("/signin-ajax")]
+    function signinAjax(): AjaxResult {
+        list($email, $password) = $this->request->get('email', 'password');
+        if ($this->authenticationService->signInByEmail($email, $password)) {
+            return new AjaxResult(1);
+        }
+        return new AjaxResult(0);
     }
 
     #[Route("/signup")]

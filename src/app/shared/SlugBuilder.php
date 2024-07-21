@@ -2,7 +2,8 @@
 
 namespace app\shared;
 
-use app\shared\category\CategoryRepository;
+use app\shared\domain\CategoryRepository;
+use app\shared\domain\EntryRepository;
 use infrastructure\Slug;
 
 readonly class SlugBuilder

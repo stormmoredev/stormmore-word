@@ -1,6 +1,8 @@
 {
   "sign_in": "Sign in",
 
+  "follow_user": "Follow",
+
   "cached_view_files": "Cached view files",
   "cached_response_files": "Cached response files",
   "cached_file_size": "Size",
@@ -13,11 +15,14 @@
   "post_add": "Add post",
   "post_placeholder": "Write your post here ...",
   "post_media_media": "Paste media url here (YouTube, image etc.)",
-  "post_gratitude": "gratitudes",
   "post_comments": "comments",
   "post_title_required": "Title is required",
   "post_subtitle_required": "Subtitle is required",
   "post_content_required": "Content is required",
+  "post_back_to_articles": "Back to articles",
+  "post_write_comment": "Write your comment ...",
+  "post_likes": "Likes",
+  "post_replies": "Replies",
 
   "date_interval_y_singular": "year ago",
   "date_interval_y_plural": "%s years ago",

@@ -29,7 +29,7 @@ class HeaderComponent implements IViewComponent
         $module = $this->selected($uri);
         $this->links[$module]['selected'] = true;
 
-        return view('@frontend-components/header', [
+        return view('@f-components/header', [
             'links' => $this->links,
             'settings' => $this->settings,
             'module' => $module

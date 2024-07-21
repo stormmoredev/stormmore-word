@@ -3,7 +3,7 @@
 namespace infrastructure;
 
 use app\authentication\StormUser;
-use app\frontend\blog\PostFinder;
+use app\frontend\blog\presentation\PostFinder;
 use app\frontend\Exception;
 use app\frontend\forum\ForumFinder;
 use infrastructure\settings\Settings;
@@ -26,7 +26,8 @@ readonly class ModuleRouter
         return match ($homepage) {
             'b' => $this->blog(),
             'c' => $this->community(),
-            'f' => $this->forum()
+            'f' => $this->forum(),
+            'p' => $this->proto()
         };
     }
 
@@ -34,7 +35,7 @@ readonly class ModuleRouter
     {
         $this->settings->forum->enabled or throw new Exception("", 404);
         $threads = $this->forumFinder->listThreads();
-        return view('@frontend/forum/index', [
+        return view('@proto/', [
             'threads' => $threads,
             'category' => null
         ]);
@@ -42,10 +43,9 @@ readonly class ModuleRouter
 
     public function blog(): View
     {
-        $lang = $this->user->language->primary;
-        $posts = $this->postFinder->findPosts($lang);
+        $posts = $this->postFinder->findPosts();
 
-        return view("@frontend/blog/list", [
+        return view("@frontend/blog/posts-list", [
             'settings'  =>  $this->settings,
             'posts'     =>  $posts,
             'count' => 55
@@ -55,5 +55,13 @@ readonly class ModuleRouter
     public function community(): View
     {
         return view("@frontend/community/index");
+    }
+
+    public function proto(): View
+    {
+        $articles = json_decode(file_get_contents(resolve_path_alias('@proto/data/articles.json')));
+        return view("@proto/index", [
+            'articles' => $articles
+        ]);
     }
 }

@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "title": "2024 Mac Developer Toolbox: Essentials for Full-Stack Development",
+    "subtitle": "Many talented developers prefer to use Macs for their development work, and I’m no exception. That’s why I’ve compiled a list of software and tools that I find useful, along with some setup tips. I’m sharing these to foster a community of learning and exploration.",
+    "media": "https://miro.medium.com/v2/resize:fit:720/format:webp/0*JtuYi1S24tfejTle",
+    "author": {
+      "name": "Frederick Taylor",
+      "profile": "https://miro.medium.com/v2/resize:fill:88:88/1*oY_bWqT1MLJT1wcTsl0vIg.png"
+    }
+  },
+  {
+    "id": 2,
+    "title": "SOLID Principes in PHP",
+    "subtitle": "The SOLID principles are five design principles, intended to make software designs more understandable, flexible, and maintainable.",
+    "media": "https://miro.medium.com/v2/resize:fit:4800/format:webp/1*58JpDpcojJAWDf6WzQCjDg.jpeg",
+    "author": {
+      "name": "Dragan Rapić",
+      "profile": "https://miro.medium.com/v2/resize:fill:88:88/1*6EfU4LshGevuE2BgDprZZA.jpeg"
+    }
+  },
+  {
+    "id": 3,
+    "title": "47 Signs I Look At to Know if a Programmer Knows What He Is Doing",
+    "subtitle": "I have summarized the things that I want you to keep in mind in order to become an engineer who can be entrusted with work.",
+    "media": "https://miro.medium.com/v2/resize:fit:720/format:webp/0*r3VQgYK8aaRlONeY",
+    "author": {
+      "name": "Josef Cruz",
+      "profile": "https://miro.medium.com/v2/resize:fill:64:64/1*RvB7OCsPIBQwZpVMW3UEeg.jpeg"
+    }
+  },
+  {
+    "id": 4,
+    "title": "Is Kotlin Multiplatform Mobile Replacing Flutter ?",
+    "subtitle": "In recent times, the debate surrounding Kotlin Multiplatform (KMM) and Flutter has intensified, with some\n                        suggesting that KMM might supersede Flutter as the go-to solution for cross-platform mobile development.\n                        But is this truly the case?",
+    "media": "https://miro.medium.com/v2/resize:fit:720/format:webp/1*jU_2mNOjQNPTTSdLrCcpxQ.jpeg",
+    "author": {
+      "name": "Brian Schlining",
+      "profile": "https://miro.medium.com/v2/resize:fill:88:88/1*2oq0Fw37SeNxhm_olmg7lw.png"
+    }
+  }
+]

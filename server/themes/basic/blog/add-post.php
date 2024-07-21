@@ -40,6 +40,6 @@ use app\frontend\blog\AddPostForm;
         </div>
     </div>
     <div class="flex justify-end px-2 py-2 border-t border-gray-300">
-        <button type="submit" class="btn blue">{{ _ post_save }}</button>
+        <button type="submit" class="btn gray"><?php _('post_save') ?></button>
     </div>
 </form>

@@ -21,7 +21,7 @@ class AddPostForm extends Form
                 'max_length' => 256
             ],
             'content' => ['required' => ['message' => _('post_content_required')],
-                'max_length' => 256
+                'max_length' => 10000
             ],
             'media' => [TitledMediaValidator::class]
         ];

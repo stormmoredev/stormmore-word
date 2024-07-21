@@ -1,18 +1,30 @@
 create table users
 (
-    id           integer generated always as identity (minvalue 77)
+    id            integer generated always as identity (minvalue 77)
         constraint users_pk primary key,
-    name         varchar(32)                            not null UNIQUE,
-    first_name   varchar(32)                            null,
-    last_name    varchar(32)                            null,
-    role         varchar(32)                            not null,
-    email        varchar(256)                           not null UNIQUE,
-    password     char(64)                               null,
-    photo        varchar(64)                            null,
-    about_me     text                                   null,
-    is_activated bool                     DEFAULT false not null,
-    created_at   timestamp with time zone DEFAULT now() not null,
-    updated_at   timestamp with time zone DEFAULT now() not null
+    name          varchar(32)                            not null UNIQUE,
+    slug          varchar(32)                            not null UNIQUE,
+    first_name    varchar(32)                            null,
+    last_name     varchar(32)                            null,
+    role          varchar(32)                            not null,
+    email         varchar(256)                           not null UNIQUE,
+    password      char(64)                               null,
+    photo         varchar(64)                            null,
+    about_me      text                                   null,
+    followers_num int                      DEFAULT 0     not null,
+    entries_num   int                      DEFAULT 0     not null,
+    is_activated  bool                     DEFAULT false not null,
+    created_at    timestamp with time zone DEFAULT now() not null,
+    updated_at    timestamp with time zone DEFAULT now() not null
+);
+
+create table users_followers
+(
+    user_id  integer not null
+        constraint users_followers_users__fk references users (id),
+    follower_id integer not null
+        constraint users_followers_follower__fk references users (id),
+    UNIQUE (user_id, follower_id)
 );
 
 create table users_tokens
@@ -77,12 +89,12 @@ create table entries
     subtitle         varchar(256)                           null,
     slug             varchar(128)                           not null UNIQUE,
     content          text                                   not null,
-    titled_media     varchar(512)                               null,
+    titled_media     varchar(512)                           null,
     language         varchar(8)                             not null,
     type             smallint                 DEFAULT 1     not null,
     opens_num        int                      DEFAULT 0     not null,
     votes_num        int                      DEFAULT 0     not null,
-    bookmarks_num    int                      DEFAULT 0     not null,
+    favourites_num   int                      DEFAULT 0     not null,
     replies_num      int                      default 0     not null,
     is_deleted       bool                     DEFAULT false not null,
     is_published     bool                     DEFAULT false not null,
@@ -108,6 +120,15 @@ create table entry_bookmarks
         constraint entries_bookmarks_users__fk references users (id),
     entry_id integer not null
         constraint entries_bookmarks_entries__fk references entries (id),
+    UNIQUE (user_id, entry_id)
+);
+
+create table entry_favourites
+(
+    user_id  integer not null
+        constraint entries_favourites_users__fk references users (id),
+    entry_id integer not null
+        constraint entries_favourites_entries__fk references entries (id),
     UNIQUE (user_id, entry_id)
 );
 
@@ -151,11 +172,11 @@ create table replies_votes
 );
 
 
-INSERT INTO users (name, first_name, last_name, role, email, is_activated, password)
-VALUES ('Admin', 'Admin', 'Admin', 'administrator', 'admin@admin.com', true,
+INSERT INTO users (name, slug, first_name, last_name, role, email, is_activated, password)
+VALUES ('Admin', 'admin', 'Admin', 'Admin', 'administrator', 'admin@admin.com', true,
         '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918');
-INSERT INTO users (name, first_name, last_name, role, email, is_activated, password)
-VALUES ('editor', 'Editor', 'Editor', 'editor', 'editor@editor.com', true,
+INSERT INTO users (name, slug, first_name, last_name, role, email, is_activated, password)
+VALUES ('editor', 'editor', 'Editor', 'Editor', 'editor', 'editor@editor.com', true,
         '1553cc62ff246044c683a61e203e65541990e7fcd4af9443d22b9557ecc9ac54');
 
 INSERT INTO entries (author_id,

@@ -4,12 +4,26 @@
 
 .btn { @apply inline-flex rounded-md text-sm font-semibold text-white shadow-sm bg-gray-300 px-3 py-2}
 .btn.blue { @apply bg-sky-600 hover:bg-sky-500 }
+.btn.gray { @apply hover:bg-slate-100 border-0 ring-0 text-slate-700 bg-white outline-0 }
+
+.modal-background {@apply fixed inset-0 z-50 bg-slate-700/50 backdrop-blur-sm}
+.modal-body { @apply rounded-md py-7 px-7 sm:mt-20 md:mt-32 mx-auto bg-white shadow-xl sm:max-w-xl}
 
 #add-post-form { @apply rounded-lg border border-gray-300 shadow-sm }
 #add-post-form input,textarea { @apply placeholder:text-gray-400 outline-0 w-full font-light}
 #add-post-form #title { @apply text-lg }
 #add-post-form #media { @apply text-sm font-light text-gray-400 }
 #add-post-form #content { @apply resize-none text-gray-900 min-h-96 overflow-hidden }
+
+#article #back { @apply flex h-10 w-10 items-center justify-center rounded-full
+                    shadow-md shadow-zinc-800/5 ring-1 ring-zinc-900/5 hover:bg-gray-100}
+#article #back svg { @apply h-4 w-4 stroke-zinc-500 }
+#article h1 { @apply mb-5 font-bold text-2xl }
+#article .subtitle { @apply font-light text-xl mb-10 text-gray-500 }
+#article .content {@apply whitespace-pre-wrap}
+
+.signin-form .btn { @apply hover:bg-slate-100 px-4 py-1 font-semibold text-sm disabled:bg-slate-200
+    text-slate-700 border border-slate-300 rounded-md shadow-sm text-center bg-white}
 
 .signin-form {
      input[type=text], input[type=password] {
@@ -18,12 +32,8 @@
         focus:ring-inset focus:ring-blue-400
     }
 
-    .row { @apply mb-3 }
     input[type=checkbox] { @apply  w-4 h-4 border-2 border-blue-500 rounded-sm  bg-amber-200 }
     label { @apply block text-sm font-medium leading-6 text-gray-900 cursor-pointer }
-    .btn { @apply hover:bg-slate-100 px-4 py-1 font-semibold text-sm
-        bg-white text-slate-700 border border-slate-300 rounded-md shadow-sm
-    }
 }
 
 .form-error { @apply text-red-600 text-sm }

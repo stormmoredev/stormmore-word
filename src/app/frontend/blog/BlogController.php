@@ -4,20 +4,22 @@
 
 namespace app\frontend\blog;
 
+use AjaxAuthenticate;
+use app\frontend\blog\domain\BlogService;
+use app\frontend\blog\presentation\PostFinder;
+use app\shared\presentation\ReplyFinder;
+use Authenticate;
+use Controller;
+use I18n;
 use infrastructure\AjaxResult;
 use infrastructure\ModuleRouter;
 use infrastructure\settings\Settings;
-
-use Controller;
-use Route;
-use ResponseCache;
-use Request;
-use I18n;
-use View;
-use Redirect;
-use Authenticate;
 use PostMethod;
-use AjaxAuthenticate;
+use Redirect;
+use Request;
+use ResponseCache;
+use Route;
+use View;
 
 #[Controller]
 readonly class BlogController
@@ -28,6 +30,7 @@ readonly class BlogController
         private Settings      $settings,
         private I18n          $i18n,
         private PostFinder    $postFinder,
+        private ReplyFinder   $replyFinder,
         private ModuleRouter  $homeRouter,
         private BlogService   $blogService)
     {
@@ -39,19 +42,24 @@ readonly class BlogController
         return $this->homeRouter->blog();
     }
 
+    public function js(): View
+    {
+        return view('@frontend/js');
+    }
+
     #[Route("/b/:slug")]
     public function post(): View
     {
         $this->responseCache->cache();
 
         $slug = $this->request->getParameter('slug');
-        $comments = $this->postFinder->findComments($slug);
         $post = $this->postFinder->getBySlug($slug);
+        $replies = $this->replyFinder->find($slug);
 
         return view('@frontend/blog/post', [
-            'slug' => $slug,
             'post' => $post,
-            'comments' => $comments,
+            'slug' => $slug,
+            'replies' => $replies,
             'settings' => $this->settings,
             'js_format' => $this->i18n->culture->dateTimeFormat
         ]);
@@ -59,23 +67,32 @@ readonly class BlogController
 
     #[AjaxAuthenticate]
     #[PostMethod]
-    #[Route("/b/vote/:slug")]
+    #[Route("/b/vote/:id")]
     public function votePost(): AjaxResult
     {
-        $slug = $this->request->getParameter('slug');
-        return $this->blogService->vote($slug);
+        $id = $this->request->getParameter('id');
+        return $this->blogService->vote($id);
+    }
+
+    #[AjaxAuthenticate]
+    #[PostMethod]
+    #[Route("/b/rmvote/:id")]
+    public function unvotePost(): AjaxResult
+    {
+        $id = $this->request->getParameter('id');
+        return $this->blogService->removeVote($id);
     }
 
     #[Authenticate]
-    #[Route("/b/add-comment/:slug")]
-    public function addComment(): Redirect
+    #[Route("/b/add-reply/:slug")]
+    public function addReply(): Redirect
     {
-        list($slug, $content, $articleId) = $this->request->get('slug', 'content', 'article-id');
-        $commentId = $this->blogService->addComment($articleId, $content);
+        list($postId, $content, $slug) = $this->request->get('post-id', 'content', 'slug');
+        $commentId = $this->blogService->addComment($postId, $content);
 
-        $this->responseCache->delete("$articleId-*");
+        $this->responseCache->delete("$postId-*");
 
-        return redirect("/b/$slug#comment-$commentId");
+        return redirect("/b/$slug#comment-$commentId", 'comment-success');
     }
 
     #[Authenticate]

@@ -67,7 +67,7 @@ function array_key_value(array $array, string $key, mixed $default): mixed
 function split_file_name_and_ext(string $filename): array
 {
     $lastDotPos = strrpos($filename, '.');
-    if ($lastDotPos !== false and $lastDotPos > 0) {
+    if ($lastDotPos !== false and $lastDotPos > 0 and strlen($filename) - $lastDotPos < 5) {
         $name = substr($filename, 0, $lastDotPos);
         $ext = substr($filename, $lastDotPos + 1);
         return [$name, $ext];
@@ -201,7 +201,7 @@ function back(string $url = "/"): Redirect
     return redirect($url);
 }
 
-function redirect(string $url = "/", string $messageName = "", string $messageContent = null): Redirect
+function redirect(string $url = "/", string $messageName = "", string $messageContent = ''): Redirect
 {
     if (!empty($messageName)) {
         RedirectMessage::add($messageName, $messageContent);
@@ -411,14 +411,18 @@ class ViewCompiler
         $content = preg_replace('/@else/i', '<?php } else { ?>', $content);
         $content = preg_replace('/@end/i', '<?php  } ?>', $content);
 
-        $content = preg_replace_callback('/@include\s*(.*)/i', function ($matches) {
+        $content = preg_replace_callback('/@static\s*(.*)/i', function ($matches) {
             if (str_starts_with($matches[1], '@')) {
                 $file = resolve_path_alias($matches[1]);
             } else {
                 $file = dirname($this->file) . "/" . trim($matches[1]);
             }
             $file = trim($file);
-            file_exists($file) or throw new FileNotFoundException("VIEW: @include [$file] doesn't exist");
+            list(, $extension) = split_file_name_and_ext($file);
+            if (empty($extension)) {
+                $file .= '.php';
+            }
+            file_exists($file) or throw new FileNotFoundException("VIEW: @static [$file] doesn't exist");
             $compiler = new ViewCompiler($file);
             return $compiler->compile();
         }, $content);
@@ -432,7 +436,7 @@ class ViewCompiler
             return "<?php print_view_component('$componentName', $args) ?>";
         }, $content);
 
-        $content = preg_replace_callback('/@addons\s*(.*)/i', function ($matches) {
+        $content = preg_replace_callback('/@helpers\s*(.*)/i', function ($matches) {
             $file = trim($matches[1]);
             return "<?php import(\"$file\") ?>";
         }, $content);
@@ -2708,6 +2712,22 @@ class Getter
         }
 
         return null;
+    }
+}
+
+class Mapper
+{
+    static function map(object $source, object $destination, array $map)
+    {
+        foreach ($map as $mapKey => $mapValue) {
+            $destinationField = $mapValue;
+            if (is_int($mapKey)) {
+                $requestField = $mapValue;
+            } else {
+                $requestField = $mapKey;
+            }
+            Setter::set($destination, $destinationField, $source->$requestField);
+        }
     }
 }
 

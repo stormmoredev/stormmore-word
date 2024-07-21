@@ -36,7 +36,7 @@
                         $paddingLeft = $category->deep * 5
                 ?>
                 <li class="cursor-default pl-3 pr-9 text-gray-900 p-1 hover:bg-sky-600 hover:text-white"
-                    data-value="{{ $category->id }}">
+                    x-bind="{{ $category->id }}">
                     <span class="title" style="padding-left: <?php echo $paddingLeft ?>px">{{ $category->name }}</span>
                 </li>
                 <?php endforeach; ?>

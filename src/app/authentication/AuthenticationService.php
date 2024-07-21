@@ -33,7 +33,7 @@ readonly class AuthenticationService
         $this->hybridauth = new Hybridauth($hybridAuthConfig, storage:  $this->hybridAuthStorage);
     }
 
-    public function signInByEmail($email, $password, $remember = false): bool
+    public function signInByEmail($email, $password): bool
     {
         if (empty($email) or empty($password) or !str_contains($email, '@'))
             return false;
@@ -43,13 +43,11 @@ readonly class AuthenticationService
         if ($user == null or !$user->is_activated)
             return false;
 
-        $lifeTime = $this->settings->session->sessionLifeTime;
-        $rememberLifeTime = $this->settings->session->rememberSessionLifeTime;
-        $validationTimeSpan = $remember ? $lifeTime : $rememberLifeTime;
+        $validationTimeSpan = $this->settings->session->rememberSessionLifeTime;
         $now = new DateTime();
         $validTo = $now->modify($validationTimeSpan);
 
-        $sessionKey = $this->sessionStore->create($user->id, $validTo, $remember);
+        $sessionKey = $this->sessionStore->create($user->id, $validTo, true);
         $this->authenticationCookie->addUser($user, $sessionKey);
 
         return true;
